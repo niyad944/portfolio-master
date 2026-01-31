@@ -13,6 +13,7 @@ import Certificates from "./pages/dashboard/Certificates";
 import Projects from "./pages/dashboard/Projects";
 import ResumeGenerator from "./pages/dashboard/ResumeGenerator";
 import ActivityLog from "./pages/dashboard/ActivityLog";
+import PublicPortfolio from "./pages/PublicPortfolio";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="resume" element={<ResumeGenerator />} />
             <Route path="activity" element={<ActivityLog />} />
           </Route>
+          <Route path="/p/:slug" element={<PublicPortfolio />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

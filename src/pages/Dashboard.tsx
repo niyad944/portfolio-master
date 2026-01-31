@@ -17,20 +17,45 @@ import {
   LayoutDashboard
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import SecurityAlert from "@/components/security/SecurityAlert";
+import { checkSuspiciousActivity, logActivity } from "@/hooks/useActivityLogger";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 const Dashboard = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [securityAlert, setSecurityAlert] = useState<{
+    type: "new_device" | "suspicious";
+    message?: string;
+  } | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
 
   useEffect(() => {
+    const checkSecurityAndSetUser = async (currentUser: SupabaseUser) => {
+      setUser(currentUser);
+      
+      // Check for suspicious activity
+      const securityCheck = await checkSuspiciousActivity(currentUser.id);
+      
+      if (securityCheck.newDevice) {
+        setSecurityAlert({
+          type: "new_device"
+        });
+        await logActivity(currentUser.id, "new_device_login");
+      } else if (securityCheck.isSuspicious) {
+        setSecurityAlert({
+          type: "suspicious",
+          message: securityCheck.reason
+        });
+      }
+    };
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
-        setUser(session.user);
+        checkSecurityAndSetUser(session.user);
       } else {
         navigate("/login");
       }
@@ -39,7 +64,7 @@ const Dashboard = () => {
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        setUser(session.user);
+        checkSecurityAndSetUser(session.user);
       } else {
         navigate("/login");
       }
@@ -50,6 +75,9 @@ const Dashboard = () => {
   }, [navigate]);
 
   const handleLogout = async () => {
+    if (user) {
+      await logActivity(user.id, "logout");
+    }
     await supabase.auth.signOut();
     toast({
       title: "Logged out",
@@ -164,9 +192,19 @@ const Dashboard = () => {
       )}
 
       {/* Main content */}
-      <main className="flex-1 min-h-screen">
+      <main className="flex-1 min-h-screen overflow-x-hidden">
         <Outlet context={{ user }} />
       </main>
+
+      {/* Security Alert */}
+      {securityAlert && (
+        <SecurityAlert
+          type={securityAlert.type}
+          message={securityAlert.message}
+          onDismiss={() => setSecurityAlert(null)}
+          onConfirm={() => setSecurityAlert(null)}
+        />
+      )}
     </div>
   );
 };

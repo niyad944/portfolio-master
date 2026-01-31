@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { GraduationCap, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
+import { logActivity } from "@/hooks/useActivityLogger";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -19,7 +20,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -30,7 +31,10 @@ const Login = () => {
           description: error.message,
           variant: "destructive",
         });
-      } else {
+      } else if (data.user) {
+        // Log successful login
+        await logActivity(data.user.id, "login");
+        
         toast({
           title: "Welcome back!",
           description: "You've successfully logged in.",
