@@ -202,10 +202,10 @@ const Projects = () => {
   }
 
   return (
-    <div className="p-8 lg:p-12 max-w-6xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-10">
+    <div className="p-4 sm:p-8 lg:p-12 max-w-6xl mx-auto">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 sm:mb-10">
         <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Projects</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Projects</h1>
           <p className="text-muted-foreground">
             Showcase your work and technical achievements
           </p>
@@ -217,7 +217,7 @@ const Projects = () => {
               Add Project
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[550px]">
+          <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingProject ? "Edit Project" : "Add New Project"}</DialogTitle>
             </DialogHeader>
@@ -327,10 +327,10 @@ const Projects = () => {
           </Button>
         </div>
       ) : (
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
           {projects.map((project) => (
             <div key={project.id} className="document-card">
-              <div className="flex items-start justify-between mb-4">
+              <div className="flex items-start justify-between mb-3 sm:mb-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
                     <h3 className="font-semibold text-lg text-foreground">{project.title}</h3>

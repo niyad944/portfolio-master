@@ -47,31 +47,46 @@ export type Database = {
       activity_logs: {
         Row: {
           action: string
+          browser: string | null
           created_at: string
+          device_fingerprint: string | null
+          device_type: string | null
           id: string
           ip_address: string | null
           is_suspicious: boolean | null
+          location_info: Json | null
           metadata: Json | null
+          os: string | null
           user_agent: string | null
           user_id: string | null
         }
         Insert: {
           action: string
+          browser?: string | null
           created_at?: string
+          device_fingerprint?: string | null
+          device_type?: string | null
           id?: string
           ip_address?: string | null
           is_suspicious?: boolean | null
+          location_info?: Json | null
           metadata?: Json | null
+          os?: string | null
           user_agent?: string | null
           user_id?: string | null
         }
         Update: {
           action?: string
+          browser?: string | null
           created_at?: string
+          device_fingerprint?: string | null
+          device_type?: string | null
           id?: string
           ip_address?: string | null
           is_suspicious?: boolean | null
+          location_info?: Json | null
           metadata?: Json | null
+          os?: string | null
           user_agent?: string | null
           user_id?: string | null
         }
@@ -217,12 +232,15 @@ export type Database = {
           full_name: string
           github_url: string | null
           id: string
+          is_public: boolean | null
           linkedin_url: string | null
           location: string | null
           phone: string | null
           portfolio_url: string | null
+          public_slug: string | null
           updated_at: string
           user_id: string
+          visible_sections: Json | null
         }
         Insert: {
           avatar_url?: string | null
@@ -232,12 +250,15 @@ export type Database = {
           full_name: string
           github_url?: string | null
           id?: string
+          is_public?: boolean | null
           linkedin_url?: string | null
           location?: string | null
           phone?: string | null
           portfolio_url?: string | null
+          public_slug?: string | null
           updated_at?: string
           user_id: string
+          visible_sections?: Json | null
         }
         Update: {
           avatar_url?: string | null
@@ -247,12 +268,15 @@ export type Database = {
           full_name?: string
           github_url?: string | null
           id?: string
+          is_public?: boolean | null
           linkedin_url?: string | null
           location?: string | null
           phone?: string | null
           portfolio_url?: string | null
+          public_slug?: string | null
           updated_at?: string
           user_id?: string
+          visible_sections?: Json | null
         }
         Relationships: []
       }

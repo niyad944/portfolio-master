@@ -220,24 +220,24 @@ const AboutMe = () => {
   }
 
   return (
-    <div className="p-8 lg:p-12 max-w-5xl mx-auto">
-      <div className="mb-10">
-        <h1 className="text-3xl font-bold text-foreground mb-2">About Me</h1>
+    <div className="p-4 sm:p-8 lg:p-12 max-w-5xl mx-auto">
+      <div className="mb-8 sm:mb-10">
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">About Me</h1>
         <p className="text-muted-foreground">
           Build your professional profile with your information, skills, and achievements
         </p>
       </div>
 
       {/* Profile Section */}
-      <section className="glass-card rounded-2xl p-8 mb-8">
+      <section className="glass-card rounded-2xl p-4 sm:p-8 mb-6 sm:mb-8">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
             <User className="w-5 h-5 text-accent" />
           </div>
-          <h2 className="text-xl font-semibold text-foreground">Personal Information</h2>
+          <h2 className="text-lg sm:text-xl font-semibold text-foreground">Personal Information</h2>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
           <div className="space-y-2">
             <Label>Full Name</Label>
             <Input
@@ -307,30 +307,30 @@ const AboutMe = () => {
               />
             </div>
           </div>
-          <div className="md:col-span-2 space-y-2">
+          <div className="sm:col-span-2 space-y-2">
             <Label>Bio / Summary</Label>
             <Textarea
               value={profile.bio}
               onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
               placeholder="Write a brief professional summary about yourself..."
-              className="min-h-[120px] input-focus"
+              className="min-h-[100px] sm:min-h-[120px] input-focus"
             />
           </div>
         </div>
 
-        <Button onClick={saveProfile} disabled={saving} className="mt-6 bg-accent hover:bg-accent/90 text-accent-foreground">
+        <Button onClick={saveProfile} disabled={saving} className="mt-6 w-full sm:w-auto bg-accent hover:bg-accent/90 text-accent-foreground">
           {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
           Save Profile
         </Button>
       </section>
 
       {/* Skills Section */}
-      <section className="glass-card rounded-2xl p-8 mb-8">
+      <section className="glass-card rounded-2xl p-4 sm:p-8 mb-6 sm:mb-8">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center">
             <Award className="w-5 h-5 text-purple-500" />
           </div>
-          <h2 className="text-xl font-semibold text-foreground">Skills</h2>
+          <h2 className="text-lg sm:text-xl font-semibold text-foreground">Skills</h2>
         </div>
 
         <div className="flex flex-wrap gap-2 mb-6">
@@ -352,18 +352,18 @@ const AboutMe = () => {
           )}
         </div>
 
-        <div className="flex flex-wrap gap-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <Input
             value={newSkill.name}
             onChange={(e) => setNewSkill({ ...newSkill, name: e.target.value })}
-            placeholder="Skill name (e.g., Python)"
-            className="flex-1 min-w-[200px] input-focus"
+            placeholder="Skill name"
+            className="input-focus"
           />
           <Select
             value={newSkill.proficiency_level}
             onValueChange={(value) => setNewSkill({ ...newSkill, proficiency_level: value })}
           >
-            <SelectTrigger className="w-[160px]">
+            <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -376,10 +376,10 @@ const AboutMe = () => {
           <Input
             value={newSkill.category}
             onChange={(e) => setNewSkill({ ...newSkill, category: e.target.value })}
-            placeholder="Category (optional)"
-            className="w-[180px] input-focus"
+            placeholder="Category"
+            className="input-focus"
           />
-          <Button onClick={addSkill} variant="outline">
+          <Button onClick={addSkill} variant="outline" className="w-full">
             <Plus className="w-4 h-4 mr-2" />
             Add Skill
           </Button>
@@ -387,12 +387,12 @@ const AboutMe = () => {
       </section>
 
       {/* Education Section */}
-      <section className="glass-card rounded-2xl p-8 mb-8">
+      <section className="glass-card rounded-2xl p-4 sm:p-8 mb-6 sm:mb-8">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
-            <GraduationCap className="w-5 h-5 text-blue-500" />
+          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+            <GraduationCap className="w-5 h-5 text-accent" />
           </div>
-          <h2 className="text-xl font-semibold text-foreground">Education</h2>
+          <h2 className="text-lg sm:text-xl font-semibold text-foreground">Education</h2>
         </div>
 
         <div className="space-y-4 mb-6">
@@ -418,7 +418,7 @@ const AboutMe = () => {
           )}
         </div>
 
-        <div className="grid md:grid-cols-2 gap-4 p-4 border border-dashed border-border rounded-xl">
+        <div className="grid sm:grid-cols-2 gap-3 sm:gap-4 p-3 sm:p-4 border border-dashed border-border rounded-xl">
           <Input
             value={newEducation.institution}
             onChange={(e) => setNewEducation({ ...newEducation, institution: e.target.value })}
@@ -428,7 +428,7 @@ const AboutMe = () => {
           <Input
             value={newEducation.degree}
             onChange={(e) => setNewEducation({ ...newEducation, degree: e.target.value })}
-            placeholder="Degree (e.g., B.Tech)"
+            placeholder="Degree"
             className="input-focus"
           />
           <Input
@@ -455,7 +455,7 @@ const AboutMe = () => {
             onChange={(e) => setNewEducation({ ...newEducation, end_date: e.target.value })}
             className="input-focus"
           />
-          <Button onClick={addEducation} variant="outline" className="md:col-span-2">
+          <Button onClick={addEducation} variant="outline" className="sm:col-span-2">
             <Plus className="w-4 h-4 mr-2" />
             Add Education
           </Button>
@@ -463,12 +463,12 @@ const AboutMe = () => {
       </section>
 
       {/* Achievements Section */}
-      <section className="glass-card rounded-2xl p-8">
+      <section className="glass-card rounded-2xl p-4 sm:p-8">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center">
-            <Award className="w-5 h-5 text-orange-500" />
+          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+            <Award className="w-5 h-5 text-accent" />
           </div>
-          <h2 className="text-xl font-semibold text-foreground">Achievements</h2>
+          <h2 className="text-lg sm:text-xl font-semibold text-foreground">Achievements</h2>
         </div>
 
         <div className="space-y-4 mb-6">

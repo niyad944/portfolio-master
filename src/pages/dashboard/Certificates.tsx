@@ -233,10 +233,10 @@ const Certificates = () => {
   }
 
   return (
-    <div className="p-8 lg:p-12 max-w-6xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-10">
+    <div className="p-4 sm:p-8 lg:p-12 max-w-6xl mx-auto">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 sm:mb-10">
         <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Document Locker</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Document Locker</h1>
           <p className="text-muted-foreground">
             Securely store and manage your academic certificates
           </p>
@@ -374,10 +374,10 @@ const Certificates = () => {
           </Button>
         </div>
       ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {certificates.map((cert) => (
             <div key={cert.id} className="document-card">
-              <div className="flex items-start justify-between mb-4">
+              <div className="flex items-start justify-between mb-3 sm:mb-4">
                 <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center">
                   <FileText className="w-6 h-6 text-accent" />
                 </div>
