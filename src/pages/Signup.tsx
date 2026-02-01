@@ -63,7 +63,7 @@ const Signup = () => {
   ];
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex flex-col lg:flex-row">
       {/* Left Side - Visual */}
       <div className="hidden lg:flex flex-1 hero-gradient hero-pattern items-center justify-center p-12">
         <div className="max-w-lg">
@@ -88,25 +88,25 @@ const Signup = () => {
       </div>
 
       {/* Right Side - Form */}
-      <div className="flex-1 flex items-center justify-center px-8 py-12 bg-background">
+      <div className="flex-1 flex items-center justify-center px-4 sm:px-8 py-8 sm:py-12 bg-background">
         <div className="w-full max-w-md">
-          <Link to="/" className="flex items-center gap-2 mb-12">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-              <GraduationCap className="w-6 h-6 text-primary-foreground" />
+          <Link to="/" className="flex items-center gap-2 mb-8 sm:mb-12">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+              <GraduationCap className="w-5 h-5 sm:w-6 sm:h-6 text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold text-foreground">ProFolioX</span>
+            <span className="text-lg sm:text-xl font-bold text-foreground">ProFolioX</span>
           </Link>
 
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-foreground mb-2">Create your account</h1>
-            <p className="text-muted-foreground">
+          <div className="mb-6 sm:mb-8">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Create your account</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
               Get started with your professional portfolio in minutes
             </p>
           </div>
 
-          <form onSubmit={handleSignup} className="space-y-6">
+          <form onSubmit={handleSignup} className="space-y-5 sm:space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="fullName" className="text-foreground font-medium">
+              <Label htmlFor="fullName" className="text-foreground font-medium text-sm sm:text-base">
                 Full Name
               </Label>
               <div className="relative">
@@ -117,14 +117,14 @@ const Signup = () => {
                   placeholder="John Doe"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="pl-10 h-12 input-focus"
+                  className="pl-10 h-11 sm:h-12 input-focus text-base"
                   required
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-foreground font-medium">
+              <Label htmlFor="email" className="text-foreground font-medium text-sm sm:text-base">
                 Email Address
               </Label>
               <div className="relative">
@@ -135,14 +135,14 @@ const Signup = () => {
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 h-12 input-focus"
+                  className="pl-10 h-11 sm:h-12 input-focus text-base"
                   required
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-foreground font-medium">
+              <Label htmlFor="password" className="text-foreground font-medium text-sm sm:text-base">
                 Password
               </Label>
               <div className="relative">
@@ -153,7 +153,7 @@ const Signup = () => {
                   placeholder="Create a strong password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 h-12 input-focus"
+                  className="pl-10 h-11 sm:h-12 input-focus text-base"
                   required
                   minLength={6}
                 />
@@ -165,7 +165,7 @@ const Signup = () => {
 
             <Button
               type="submit"
-              className="w-full h-12 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold text-base"
+              className="w-full h-11 sm:h-12 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold text-base min-h-[44px]"
               disabled={loading}
             >
               {loading ? (
@@ -179,7 +179,7 @@ const Signup = () => {
             </Button>
           </form>
 
-          <p className="mt-8 text-center text-muted-foreground">
+          <p className="mt-6 sm:mt-8 text-center text-sm sm:text-base text-muted-foreground">
             Already have an account?{" "}
             <Link to="/login" className="text-accent font-medium hover:underline">
               Log in
