@@ -104,16 +104,16 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen flex w-full bg-background">
+    <div className="min-h-screen flex w-full bg-background overflow-x-hidden">
       {/* Sidebar */}
       <aside
         className={`fixed lg:static inset-y-0 left-0 z-50 flex flex-col bg-sidebar transition-all duration-300 ${
-          sidebarOpen ? "w-64" : "w-20"
+          sidebarOpen ? "w-64" : "w-0 lg:w-20"
         }`}
       >
         {/* Logo */}
-        <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
-          <div className={`flex items-center gap-3 ${!sidebarOpen && "justify-center w-full"}`}>
+        <div className={`flex items-center justify-between p-4 border-b border-sidebar-border ${!sidebarOpen && "lg:justify-center"}`}>
+          <div className={`flex items-center gap-3 ${!sidebarOpen && "lg:justify-center lg:w-full"} ${!sidebarOpen && "hidden lg:flex"}`}>
             <div className="w-10 h-10 rounded-xl bg-sidebar-primary flex items-center justify-center shrink-0">
               <GraduationCap className="w-6 h-6 text-sidebar-primary-foreground" />
             </div>
@@ -130,26 +130,32 @@ const Dashboard = () => {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 py-6 px-3 space-y-2 overflow-y-auto custom-scrollbar">
+        <nav className={`flex-1 py-4 sm:py-6 px-2 sm:px-3 space-y-1 sm:space-y-2 overflow-y-auto custom-scrollbar ${!sidebarOpen && "hidden lg:block"}`}>
           {navItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
               end={item.path === "/dashboard"}
-              className="sidebar-item text-sidebar-foreground"
+              className="sidebar-item text-sidebar-foreground min-h-[44px]"
               activeClassName="active"
+              onClick={() => {
+                // Close sidebar on mobile after navigation
+                if (window.innerWidth < 1024) {
+                  setSidebarOpen(false);
+                }
+              }}
             >
               <item.icon className="w-5 h-5 shrink-0" />
-              {sidebarOpen && <span className="font-medium">{item.label}</span>}
+              {sidebarOpen && <span className="font-medium text-sm sm:text-base">{item.label}</span>}
             </NavLink>
           ))}
         </nav>
 
         {/* User section */}
-        <div className="p-4 border-t border-sidebar-border">
+        <div className={`p-4 border-t border-sidebar-border ${!sidebarOpen && "hidden lg:block"}`}>
           {sidebarOpen ? (
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-sidebar-accent flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-sidebar-accent flex items-center justify-center shrink-0">
                 <User className="w-5 h-5 text-sidebar-foreground" />
               </div>
               <div className="flex-1 min-w-0">
@@ -165,8 +171,8 @@ const Dashboard = () => {
           <Button
             variant="ghost"
             onClick={handleLogout}
-            className={`w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
-              !sidebarOpen && "justify-center px-2"
+            className={`w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground min-h-[44px] ${
+              !sidebarOpen && "lg:justify-center lg:px-2"
             }`}
           >
             <LogOut className="w-5 h-5 shrink-0" />
@@ -178,7 +184,8 @@ const Dashboard = () => {
       {/* Mobile sidebar toggle */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 w-10 h-10 rounded-lg bg-primary text-primary-foreground flex items-center justify-center"
+        className="lg:hidden fixed top-4 left-4 z-[60] w-11 h-11 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shadow-lg"
+        aria-label={sidebarOpen ? "Close menu" : "Open menu"}
       >
         {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
       </button>
@@ -192,7 +199,7 @@ const Dashboard = () => {
       )}
 
       {/* Main content */}
-      <main className="flex-1 min-h-screen overflow-x-hidden">
+      <main className="flex-1 min-h-screen overflow-x-hidden pt-16 lg:pt-0">
         <Outlet context={{ user }} />
       </main>
 
