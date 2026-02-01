@@ -1,4 +1,4 @@
 project_id = "flbzaqqzagqgbwoevpbn"
 
 [functions.ai-resume-helper]
-verify_jwt = true
+verify_jwt = false
