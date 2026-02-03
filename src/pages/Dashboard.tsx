@@ -3,6 +3,7 @@ import { useNavigate, Outlet, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   GraduationCap,
   User,
@@ -98,39 +99,57 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+          className="w-10 h-10 border-2 border-accent border-t-transparent rounded-full animate-spin"
+        />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex w-full bg-background overflow-x-hidden">
+    <div className="min-h-screen flex w-full bg-background overflow-x-hidden noise-overlay">
       {/* Sidebar */}
-      <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 flex flex-col bg-sidebar transition-all duration-300 ${
-          sidebarOpen ? "w-64" : "w-0 lg:w-20"
+      <motion.aside
+        initial={false}
+        animate={{ width: sidebarOpen ? 256 : 80 }}
+        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+        className={`fixed lg:static inset-y-0 left-0 z-50 flex flex-col bg-sidebar border-r border-white/[0.05] ${
+          !sidebarOpen && "max-lg:w-0 max-lg:overflow-hidden"
         }`}
       >
         {/* Logo */}
-        <div className={`flex items-center justify-between p-4 border-b border-sidebar-border ${!sidebarOpen && "lg:justify-center"}`}>
-          <div className={`flex items-center gap-3 ${!sidebarOpen && "lg:justify-center lg:w-full"} ${!sidebarOpen && "hidden lg:flex"}`}>
-            <div className="w-10 h-10 rounded-xl bg-sidebar-primary flex items-center justify-center shrink-0">
-              <GraduationCap className="w-6 h-6 text-sidebar-primary-foreground" />
+        <div className={`flex items-center justify-between p-4 border-b border-white/[0.05] ${!sidebarOpen && "lg:justify-center"}`}>
+          <motion.div 
+            initial={false}
+            animate={{ opacity: sidebarOpen ? 1 : 0 }}
+            className={`flex items-center gap-3 ${!sidebarOpen && "lg:hidden"}`}
+          >
+            <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center shrink-0">
+              <GraduationCap className="w-6 h-6 text-accent-foreground" />
             </div>
-            {sidebarOpen && (
-              <span className="text-lg font-bold text-sidebar-foreground">ProFolioX</span>
-            )}
-          </div>
+            <span className="text-lg font-display font-semibold text-sidebar-foreground">ProFolioX</span>
+          </motion.div>
+          
+          {/* Collapsed logo */}
+          {!sidebarOpen && (
+            <div className="hidden lg:flex w-10 h-10 rounded-xl bg-accent items-center justify-center">
+              <GraduationCap className="w-6 h-6 text-accent-foreground" />
+            </div>
+          )}
+          
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="hidden lg:flex w-8 h-8 items-center justify-center rounded-lg hover:bg-sidebar-accent transition-colors"
+            className="hidden lg:flex w-8 h-8 items-center justify-center rounded-lg hover:bg-white/[0.05] transition-colors"
           >
-            <ChevronRight className={`w-5 h-5 text-sidebar-foreground transition-transform ${sidebarOpen ? "rotate-180" : ""}`} />
+            <ChevronRight className={`w-5 h-5 text-sidebar-foreground transition-transform duration-300 ${sidebarOpen ? "rotate-180" : ""}`} />
           </button>
         </div>
 
         {/* Navigation */}
-        <nav className={`flex-1 py-4 sm:py-6 px-2 sm:px-3 space-y-1 sm:space-y-2 overflow-y-auto custom-scrollbar ${!sidebarOpen && "hidden lg:block"}`}>
+        <nav className={`flex-1 py-4 sm:py-6 px-2 sm:px-3 space-y-1 sm:space-y-2 overflow-y-auto custom-scrollbar ${!sidebarOpen && "max-lg:hidden"}`}>
           {navItems.map((item) => (
             <NavLink
               key={item.path}
@@ -139,68 +158,132 @@ const Dashboard = () => {
               className="sidebar-item text-sidebar-foreground min-h-[44px]"
               activeClassName="active"
               onClick={() => {
-                // Close sidebar on mobile after navigation
                 if (window.innerWidth < 1024) {
                   setSidebarOpen(false);
                 }
               }}
             >
               <item.icon className="w-5 h-5 shrink-0" />
-              {sidebarOpen && <span className="font-medium text-sm sm:text-base">{item.label}</span>}
+              <AnimatePresence>
+                {sidebarOpen && (
+                  <motion.span
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: "auto" }}
+                    exit={{ opacity: 0, width: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="font-medium text-sm sm:text-base whitespace-nowrap overflow-hidden"
+                  >
+                    {item.label}
+                  </motion.span>
+                )}
+              </AnimatePresence>
             </NavLink>
           ))}
         </nav>
 
         {/* User section */}
-        <div className={`p-4 border-t border-sidebar-border ${!sidebarOpen && "hidden lg:block"}`}>
-          {sidebarOpen ? (
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-sidebar-accent flex items-center justify-center shrink-0">
-                <User className="w-5 h-5 text-sidebar-foreground" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-sidebar-foreground truncate">
-                  {user?.user_metadata?.full_name || "User"}
-                </p>
-                <p className="text-xs text-sidebar-foreground/60 truncate">
-                  {user?.email}
-                </p>
-              </div>
-            </div>
-          ) : null}
+        <div className={`p-4 border-t border-white/[0.05] ${!sidebarOpen && "max-lg:hidden"}`}>
+          <AnimatePresence>
+            {sidebarOpen && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex items-center gap-3 mb-4"
+              >
+                <div className="w-10 h-10 rounded-full bg-accent/20 border border-accent/30 flex items-center justify-center shrink-0">
+                  <User className="w-5 h-5 text-accent" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-sidebar-foreground truncate">
+                    {user?.user_metadata?.full_name || "User"}
+                  </p>
+                  <p className="text-xs text-sidebar-foreground/60 truncate font-mono">
+                    {user?.email}
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
           <Button
             variant="ghost"
             onClick={handleLogout}
-            className={`w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground min-h-[44px] ${
+            className={`w-full justify-start text-sidebar-foreground hover:bg-white/[0.05] hover:text-accent min-h-[44px] transition-colors ${
               !sidebarOpen && "lg:justify-center lg:px-2"
             }`}
           >
             <LogOut className="w-5 h-5 shrink-0" />
-            {sidebarOpen && <span className="ml-3">Log out</span>}
+            <AnimatePresence>
+              {sidebarOpen && (
+                <motion.span
+                  initial={{ opacity: 0, width: 0 }}
+                  animate={{ opacity: 1, width: "auto" }}
+                  exit={{ opacity: 0, width: 0 }}
+                  className="ml-3 whitespace-nowrap overflow-hidden"
+                >
+                  Log out
+                </motion.span>
+              )}
+            </AnimatePresence>
           </Button>
         </div>
-      </aside>
+      </motion.aside>
 
       {/* Mobile sidebar toggle */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="lg:hidden fixed top-4 left-4 z-[60] w-11 h-11 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shadow-lg"
+        className="lg:hidden fixed top-4 left-4 z-[60] w-11 h-11 rounded-lg bg-accent text-accent-foreground flex items-center justify-center shadow-glow"
         aria-label={sidebarOpen ? "Close menu" : "Open menu"}
       >
-        {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        <AnimatePresence mode="wait">
+          {sidebarOpen ? (
+            <motion.div
+              key="close"
+              initial={{ rotate: -90, opacity: 0 }}
+              animate={{ rotate: 0, opacity: 1 }}
+              exit={{ rotate: 90, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <X className="w-5 h-5" />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="menu"
+              initial={{ rotate: 90, opacity: 0 }}
+              animate={{ rotate: 0, opacity: 1 }}
+              exit={{ rotate: -90, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Menu className="w-5 h-5" />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </button>
 
       {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-40"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Main content */}
       <main className="flex-1 min-h-screen overflow-x-hidden pt-16 lg:pt-0">
-        <Outlet context={{ user }} />
+        <motion.div
+          key={location.pathname}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <Outlet context={{ user }} />
+        </motion.div>
       </main>
 
       {/* Security Alert */}
