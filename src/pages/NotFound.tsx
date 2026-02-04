@@ -13,45 +13,45 @@ const NotFound = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background noise-overlay relative overflow-hidden">
-      {/* Ambient effects */}
-      <div className="absolute top-1/3 left-1/4 w-64 h-64 bg-accent/10 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-1/3 right-1/4 w-48 h-48 bg-accent/5 rounded-full blur-[100px] pointer-events-none" />
+      {/* Ethereal ambient effects */}
+      <div className="absolute top-[25%] left-[20%] w-[400px] h-[400px] bg-accent/8 rounded-full blur-[150px] pointer-events-none animate-bloom" />
+      <div className="absolute bottom-[25%] right-[20%] w-[300px] h-[300px] bg-plasma/6 rounded-full blur-[120px] pointer-events-none" />
       
       <motion.div
-        initial={{ opacity: 0, y: 30 }}
+        initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
         className="text-center relative z-10 px-4"
       >
         <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="mb-8"
+          initial={{ scale: 0.8, opacity: 0, filter: "blur(10px)" }}
+          animate={{ scale: 1, opacity: 1, filter: "blur(0px)" }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="mb-10"
         >
-          <span className="text-8xl sm:text-9xl font-display font-semibold gold-text">404</span>
+          <span className="text-8xl sm:text-9xl font-display font-semibold lumina-text">404</span>
         </motion.div>
         
-        <h1 className="text-2xl sm:text-3xl font-display font-semibold text-foreground mb-4">
+        <h1 className="text-2xl sm:text-4xl font-display font-semibold text-foreground mb-5 tracking-tight">
           Page Not Found
         </h1>
-        <p className="text-muted-foreground mb-8 max-w-md mx-auto">
+        <p className="text-muted-foreground mb-10 max-w-md mx-auto text-base sm:text-lg">
           The page you're looking for doesn't exist or has been moved. Let's get you back on track.
         </p>
         
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link to="/">
-            <Button className="bg-accent hover:bg-accent/90 text-accent-foreground btn-glow shadow-glow min-h-[44px]">
-              <Home className="w-4 h-4 mr-2" />
+            <Button className="bg-accent hover:bg-accent/90 text-accent-foreground btn-glow shadow-glow min-h-[52px] px-8 text-base rounded-xl transition-all duration-500 hover:shadow-bloom">
+              <Home className="w-5 h-5 mr-2" />
               Return Home
             </Button>
           </Link>
           <Button
             variant="outline"
             onClick={() => window.history.back()}
-            className="border-white/10 hover:bg-white/[0.05] min-h-[44px]"
+            className="border-white/10 hover:bg-white/[0.05] min-h-[52px] px-8 text-base rounded-xl transition-all duration-400"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
+            <ArrowLeft className="w-5 h-5 mr-2" />
             Go Back
           </Button>
         </div>
