@@ -564,6 +564,98 @@
   .text-balance {
     text-wrap: balance;
   }
+
+  /* 3D Perspective utilities */
+  .perspective-1200 {
+    perspective: 1200px;
+  }
+
+  .perspective-800 {
+    perspective: 800px;
+  }
+
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+
+  /* 3D hover lift for buttons */
+  .btn-3d-lift {
+    transition: transform 0.4s cubic-bezier(0.03, 0.98, 0.52, 0.99),
+                box-shadow 0.4s cubic-bezier(0.03, 0.98, 0.52, 0.99);
+    transform: perspective(600px) translateZ(0px);
+  }
+
+  .btn-3d-lift:hover {
+    transform: perspective(600px) translateZ(12px) translateY(-2px);
+    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.4),
+                0 0 60px -20px hsl(195 80% 65% / 0.2);
+  }
+
+  /* 3D floating animation for decorative elements */
+  .float-3d {
+    animation: float3d 6s ease-in-out infinite;
+    transform-style: preserve-3d;
+  }
+
+  @keyframes float3d {
+    0%, 100% {
+      transform: perspective(800px) translateY(0px) rotateX(0deg) rotateY(0deg);
+    }
+    25% {
+      transform: perspective(800px) translateY(-8px) rotateX(2deg) rotateY(-2deg);
+    }
+    50% {
+      transform: perspective(800px) translateY(-12px) rotateX(-1deg) rotateY(3deg);
+    }
+    75% {
+      transform: perspective(800px) translateY(-5px) rotateX(1.5deg) rotateY(-1deg);
+    }
+  }
+
+  /* Subtle depth shadow for 3D elements */
+  .shadow-3d {
+    box-shadow: 
+      0 2px 4px rgba(0, 0, 0, 0.1),
+      0 8px 16px rgba(0, 0, 0, 0.15),
+      0 16px 32px rgba(0, 0, 0, 0.1);
+  }
+
+  .shadow-3d-hover {
+    transition: box-shadow 0.5s ease, transform 0.5s ease;
+  }
+
+  .shadow-3d-hover:hover {
+    box-shadow: 
+      0 4px 8px rgba(0, 0, 0, 0.12),
+      0 16px 32px rgba(0, 0, 0, 0.18),
+      0 32px 64px rgba(0, 0, 0, 0.12);
+  }
+}
+
+/* Prefers reduced motion - disable all 3D and complex animations */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .float-3d,
+  .btn-3d-lift,
+  .tilt-3d-card {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .btn-3d-lift:hover {
+    transform: none !important;
+  }
 }
 
 /* Mobile-first responsive improvements */

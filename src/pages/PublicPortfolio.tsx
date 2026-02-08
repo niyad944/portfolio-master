@@ -17,6 +17,9 @@ import {
   ArrowLeft,
   Star
 } from "lucide-react";
+import FloatingOrbs from "@/components/effects/FloatingOrbs";
+import ScrollReveal3D from "@/components/effects/ScrollReveal3D";
+import Tilt3DCard from "@/components/effects/Tilt3DCard";
 
 interface VisibleSections {
   about: boolean;
@@ -52,7 +55,6 @@ const PublicPortfolio = () => {
   const fetchPortfolio = async () => {
     setLoading(true);
 
-    // Fetch profile by public slug
     const { data: profileData, error } = await supabase
       .from("profiles")
       .select("*")
@@ -79,7 +81,6 @@ const PublicPortfolio = () => {
       });
     }
 
-    // Fetch related data
     const userId = profileData.user_id;
     const [skillsRes, eduRes, achRes, projRes] = await Promise.all([
       supabase.from("skills").select("*").eq("user_id", userId),
@@ -137,6 +138,7 @@ const PublicPortfolio = () => {
   if (notFound) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 noise-overlay relative overflow-hidden">
+        <FloatingOrbs variant="subtle" />
         <div className="absolute top-[30%] left-[25%] w-[400px] h-[400px] bg-accent/8 rounded-full blur-[150px] pointer-events-none" />
         <div className="absolute bottom-[30%] right-[25%] w-[300px] h-[300px] bg-plasma/6 rounded-full blur-[120px] pointer-events-none" />
         
@@ -151,7 +153,7 @@ const PublicPortfolio = () => {
             This portfolio doesn't exist or is set to private.
           </p>
           <Link to="/">
-            <Button className="bg-accent hover:bg-accent/90 text-accent-foreground btn-glow shadow-glow min-h-[52px] px-8 rounded-xl transition-all duration-500 hover:shadow-bloom">
+            <Button className="bg-accent hover:bg-accent/90 text-accent-foreground btn-glow btn-3d-lift shadow-glow min-h-[52px] px-8 rounded-xl transition-all duration-500 hover:shadow-bloom">
               <ArrowLeft className="w-5 h-5 mr-2" />
               Go Home
             </Button>
@@ -165,6 +167,7 @@ const PublicPortfolio = () => {
     <div className="min-h-screen bg-background overflow-x-hidden noise-overlay">
       {/* Ambient background effects */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <FloatingOrbs variant="subtle" />
         <div className="absolute top-[10%] left-[10%] w-[500px] h-[500px] bg-accent/4 rounded-full blur-[180px]" />
         <div className="absolute bottom-[20%] right-[5%] w-[400px] h-[400px] bg-plasma/3 rounded-full blur-[150px]" />
       </div>
@@ -195,13 +198,14 @@ const PublicPortfolio = () => {
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="text-center mb-12 sm:mb-16"
+          className="text-center mb-12 sm:mb-16 perspective-1200"
         >
-          <motion.div
-            variants={itemVariants}
-            className="w-24 h-24 sm:w-28 sm:h-28 rounded-full lumina-border bg-background/60 backdrop-blur-xl flex items-center justify-center mx-auto mb-6 sm:mb-8 shadow-glow"
-          >
-            <User className="w-12 h-12 sm:w-14 sm:h-14 text-accent" />
+          <motion.div variants={itemVariants}>
+            <Tilt3DCard maxTilt={8} scale={1.03} className="inline-block">
+              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full lumina-border bg-background/60 backdrop-blur-xl flex items-center justify-center mx-auto mb-6 sm:mb-8 shadow-glow float-3d">
+                <User className="w-12 h-12 sm:w-14 sm:h-14 text-accent" />
+              </div>
+            </Tilt3DCard>
           </motion.div>
           
           <motion.h1
@@ -245,13 +249,7 @@ const PublicPortfolio = () => {
 
         {/* About */}
         {visibleSections.about && profile?.bio && (
-          <motion.section
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="mb-10 sm:mb-14"
-          >
+          <ScrollReveal3D className="mb-10 sm:mb-14" depth={50}>
             <h2 className="text-xl sm:text-2xl font-display font-semibold text-foreground mb-4 sm:mb-5 flex items-center gap-3">
               <User className="w-5 h-5 text-accent" />
               About
@@ -259,18 +257,12 @@ const PublicPortfolio = () => {
             <div className="glass-card rounded-2xl p-5 sm:p-8">
               <p className="text-sm sm:text-base text-foreground leading-relaxed">{profile.bio}</p>
             </div>
-          </motion.section>
+          </ScrollReveal3D>
         )}
 
         {/* Skills */}
         {visibleSections.skills && skills.length > 0 && (
-          <motion.section
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="mb-10 sm:mb-14"
-          >
+          <ScrollReveal3D className="mb-10 sm:mb-14" depth={50} direction="left">
             <h2 className="text-xl sm:text-2xl font-display font-semibold text-foreground mb-4 sm:mb-5 flex items-center gap-3">
               <Award className="w-5 h-5 text-accent" />
               Skills
@@ -295,138 +287,107 @@ const PublicPortfolio = () => {
                 </motion.div>
               ))}
             </div>
-          </motion.section>
+          </ScrollReveal3D>
         )}
 
         {/* Education */}
         {visibleSections.education && education.length > 0 && (
-          <motion.section
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="mb-10 sm:mb-14"
-          >
+          <ScrollReveal3D className="mb-10 sm:mb-14" depth={60}>
             <h2 className="text-xl sm:text-2xl font-display font-semibold text-foreground mb-4 sm:mb-5 flex items-center gap-3">
               <GraduationCap className="w-5 h-5 text-accent" />
               Education
             </h2>
             <div className="space-y-4 sm:space-y-5">
               {education.map((edu, index) => (
-                <motion.div
-                  key={edu.id}
-                  initial={{ opacity: 0, x: -25 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  className="glass-card rounded-2xl p-5 sm:p-7"
-                >
-                  <h3 className="font-display font-semibold text-foreground text-base sm:text-lg">{edu.degree}</h3>
-                  <p className="text-sm sm:text-base text-muted-foreground">{edu.institution}</p>
-                  <p className="text-xs sm:text-sm text-muted-foreground mt-2 font-mono">
-                    {edu.field_of_study && `${edu.field_of_study} • `}
-                    {edu.start_date} - {edu.end_date || "Present"}
-                    {edu.grade && ` • ${edu.grade}`}
-                  </p>
-                </motion.div>
+                <ScrollReveal3D key={edu.id} delay={index * 0.1} direction="left">
+                  <div className="glass-card rounded-2xl p-5 sm:p-7 shadow-3d-hover">
+                    <h3 className="font-display font-semibold text-foreground text-base sm:text-lg">{edu.degree}</h3>
+                    <p className="text-sm sm:text-base text-muted-foreground">{edu.institution}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-2 font-mono">
+                      {edu.field_of_study && `${edu.field_of_study} • `}
+                      {edu.start_date} - {edu.end_date || "Present"}
+                      {edu.grade && ` • ${edu.grade}`}
+                    </p>
+                  </div>
+                </ScrollReveal3D>
               ))}
             </div>
-          </motion.section>
+          </ScrollReveal3D>
         )}
 
         {/* Projects */}
         {visibleSections.projects && projects.length > 0 && (
-          <motion.section
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="mb-10 sm:mb-14"
-          >
+          <ScrollReveal3D className="mb-10 sm:mb-14" depth={60}>
             <h2 className="text-xl sm:text-2xl font-display font-semibold text-foreground mb-4 sm:mb-5 flex items-center gap-3">
               <Briefcase className="w-5 h-5 text-accent" />
               Projects
             </h2>
-            <div className="grid gap-5 sm:gap-6 sm:grid-cols-2">
+            <div className="grid gap-5 sm:gap-6 sm:grid-cols-2 perspective-1200">
               {projects.map((project, index) => (
-                <motion.div
-                  key={project.id}
-                  initial={{ opacity: 0, y: 25 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  className="glass-card-hover rounded-2xl p-5 sm:p-7"
-                >
-                  <div className="flex items-start gap-3 mb-3">
-                    <h3 className="font-display font-semibold text-foreground flex-1 text-base sm:text-lg">{project.title}</h3>
-                    {project.is_featured && (
-                      <Star className="w-5 h-5 text-accent fill-accent shrink-0" />
-                    )}
-                  </div>
-                  {project.description && (
-                    <p className="text-xs sm:text-sm text-muted-foreground mb-4 line-clamp-3">{project.description}</p>
-                  )}
-                  {project.technologies?.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5">
-                      {project.technologies.map((tech: string, i: number) => (
-                        <Badge key={i} variant="secondary" className="text-xs bg-white/[0.05] border-white/10">
-                          {tech}
-                        </Badge>
-                      ))}
+                <ScrollReveal3D key={project.id} delay={index * 0.1} direction={index % 2 === 0 ? "left" : "right"}>
+                  <Tilt3DCard maxTilt={5} scale={1.015}>
+                    <div className="glass-card-hover rounded-2xl p-5 sm:p-7 shadow-3d-hover">
+                      <div className="flex items-start gap-3 mb-3">
+                        <h3 className="font-display font-semibold text-foreground flex-1 text-base sm:text-lg">{project.title}</h3>
+                        {project.is_featured && (
+                          <Star className="w-5 h-5 text-accent fill-accent shrink-0" />
+                        )}
+                      </div>
+                      {project.description && (
+                        <p className="text-xs sm:text-sm text-muted-foreground mb-4 line-clamp-3">{project.description}</p>
+                      )}
+                      {project.technologies?.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {project.technologies.map((tech: string, i: number) => (
+                            <Badge key={i} variant="secondary" className="text-xs bg-white/[0.05] border-white/10">
+                              {tech}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                      <div className="flex gap-4 mt-5 pt-4 border-t border-white/[0.06]">
+                        {project.project_url && (
+                          <a href={project.project_url} target="_blank" rel="noopener noreferrer"
+                            className="text-xs sm:text-sm text-accent hover:underline flex items-center gap-1.5 min-h-[44px] transition-colors">
+                            <Globe className="w-4 h-4" /> Live
+                          </a>
+                        )}
+                        {project.github_url && (
+                          <a href={project.github_url} target="_blank" rel="noopener noreferrer"
+                            className="text-xs sm:text-sm text-muted-foreground hover:text-foreground flex items-center gap-1.5 min-h-[44px] transition-colors">
+                            <Github className="w-4 h-4" /> Code
+                          </a>
+                        )}
+                      </div>
                     </div>
-                  )}
-                  <div className="flex gap-4 mt-5 pt-4 border-t border-white/[0.06]">
-                    {project.project_url && (
-                      <a href={project.project_url} target="_blank" rel="noopener noreferrer"
-                        className="text-xs sm:text-sm text-accent hover:underline flex items-center gap-1.5 min-h-[44px] transition-colors">
-                        <Globe className="w-4 h-4" /> Live
-                      </a>
-                    )}
-                    {project.github_url && (
-                      <a href={project.github_url} target="_blank" rel="noopener noreferrer"
-                        className="text-xs sm:text-sm text-muted-foreground hover:text-foreground flex items-center gap-1.5 min-h-[44px] transition-colors">
-                        <Github className="w-4 h-4" /> Code
-                      </a>
-                    )}
-                  </div>
-                </motion.div>
+                  </Tilt3DCard>
+                </ScrollReveal3D>
               ))}
             </div>
-          </motion.section>
+          </ScrollReveal3D>
         )}
 
         {/* Achievements */}
         {visibleSections.achievements && achievements.length > 0 && (
-          <motion.section
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="mb-10 sm:mb-14"
-          >
+          <ScrollReveal3D className="mb-10 sm:mb-14" depth={50} direction="right">
             <h2 className="text-xl sm:text-2xl font-display font-semibold text-foreground mb-4 sm:mb-5 flex items-center gap-3">
               <Award className="w-5 h-5 text-accent" />
               Achievements
             </h2>
             <div className="space-y-4 sm:space-y-5">
               {achievements.map((ach, index) => (
-                <motion.div
-                  key={ach.id}
-                  initial={{ opacity: 0, x: -25 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  className="glass-card rounded-2xl p-5 sm:p-7"
-                >
-                  <h3 className="font-display font-semibold text-foreground text-base sm:text-lg">{ach.title}</h3>
-                  {ach.issuer && <p className="text-sm text-muted-foreground">{ach.issuer}</p>}
-                  {ach.description && (
-                    <p className="text-xs sm:text-sm text-muted-foreground mt-2">{ach.description}</p>
-                  )}
-                </motion.div>
+                <ScrollReveal3D key={ach.id} delay={index * 0.1} direction="left">
+                  <div className="glass-card rounded-2xl p-5 sm:p-7 shadow-3d-hover">
+                    <h3 className="font-display font-semibold text-foreground text-base sm:text-lg">{ach.title}</h3>
+                    {ach.issuer && <p className="text-sm text-muted-foreground">{ach.issuer}</p>}
+                    {ach.description && (
+                      <p className="text-xs sm:text-sm text-muted-foreground mt-2">{ach.description}</p>
+                    )}
+                  </div>
+                </ScrollReveal3D>
               ))}
             </div>
-          </motion.section>
+          </ScrollReveal3D>
         )}
       </main>
 

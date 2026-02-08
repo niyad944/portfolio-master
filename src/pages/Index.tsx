@@ -11,8 +11,15 @@ import {
   User,
   Briefcase
 } from "lucide-react";
+import FloatingOrbs from "@/components/effects/FloatingOrbs";
+import ScrollReveal3D from "@/components/effects/ScrollReveal3D";
+import Tilt3DCard from "@/components/effects/Tilt3DCard";
+import { useParallaxScroll } from "@/hooks/useParallaxScroll";
 
 const Index = () => {
+  const heroParallax = useParallaxScroll({ speed: 0.12 });
+  const featuresParallax = useParallaxScroll({ speed: 0.06, direction: "down" });
+
   const features = [
     {
       icon: FolderLock,
@@ -101,7 +108,7 @@ const Index = () => {
                 </Button>
               </Link>
               <Link to="/signup">
-                <Button className="bg-accent/90 hover:bg-accent text-accent-foreground font-medium text-sm sm:text-base px-4 sm:px-5 h-9 sm:h-10 btn-glow transition-all duration-500 hover:shadow-glow">
+                <Button className="bg-accent/90 hover:bg-accent text-accent-foreground font-medium text-sm sm:text-base px-4 sm:px-5 h-9 sm:h-10 btn-glow btn-3d-lift transition-all duration-500 hover:shadow-glow">
                   <span className="hidden sm:inline">Sign Up Free</span>
                   <span className="sm:hidden">Sign Up</span>
                 </Button>
@@ -113,17 +120,29 @@ const Index = () => {
 
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center hero-cinematic overflow-hidden pt-16 sm:pt-20 px-4">
-        {/* Ethereal light effects */}
-        <div className="absolute top-[15%] left-[20%] w-[500px] h-[500px] bg-accent/8 rounded-full blur-[150px] pointer-events-none animate-bloom" />
-        <div className="absolute bottom-[20%] right-[15%] w-[400px] h-[400px] bg-plasma/6 rounded-full blur-[130px] pointer-events-none" />
-        <div className="absolute top-[60%] left-[50%] w-[300px] h-[300px] bg-accent/5 rounded-full blur-[100px] pointer-events-none" />
+        {/* 3D Floating Orbs */}
+        <FloatingOrbs variant="hero" />
+        
+        {/* Parallax light effects */}
+        <div 
+          className="absolute top-[15%] left-[20%] w-[500px] h-[500px] bg-accent/8 rounded-full blur-[150px] pointer-events-none animate-bloom" 
+          style={{ transform: `translateY(${heroParallax}px)` }}
+        />
+        <div 
+          className="absolute bottom-[20%] right-[15%] w-[400px] h-[400px] bg-plasma/6 rounded-full blur-[130px] pointer-events-none"
+          style={{ transform: `translateY(${heroParallax * 0.7}px)` }}
+        />
+        <div 
+          className="absolute top-[60%] left-[50%] w-[300px] h-[300px] bg-accent/5 rounded-full blur-[100px] pointer-events-none"
+          style={{ transform: `translateY(${heroParallax * 1.3}px)` }}
+        />
         
         <div className="container mx-auto px-0 sm:px-6 relative z-10">
           <motion.div 
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            className="max-w-4xl mx-auto text-center"
+            className="max-w-4xl mx-auto text-center perspective-1200"
           >
             <motion.div 
               variants={itemVariants}
@@ -154,13 +173,13 @@ const Index = () => {
               className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5"
             >
               <Link to="/signup" className="w-full sm:w-auto">
-                <Button size="lg" className="w-full sm:w-auto bg-accent hover:bg-accent/90 text-accent-foreground font-semibold text-base sm:text-lg px-8 sm:px-10 py-6 sm:py-7 btn-glow min-h-[52px] shadow-glow transition-all duration-500 hover:shadow-bloom">
+                <Button size="lg" className="w-full sm:w-auto bg-accent hover:bg-accent/90 text-accent-foreground font-semibold text-base sm:text-lg px-8 sm:px-10 py-6 sm:py-7 btn-glow btn-3d-lift min-h-[52px] shadow-glow transition-all duration-500 hover:shadow-bloom">
                   Get Started Free
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
               <Link to="/login" className="w-full sm:w-auto">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto border-white/10 text-foreground hover:bg-white/[0.04] hover:border-white/20 font-semibold text-base sm:text-lg px-8 sm:px-10 py-6 sm:py-7 min-h-[52px] transition-all duration-500">
+                <Button size="lg" variant="outline" className="w-full sm:w-auto border-white/10 text-foreground hover:bg-white/[0.04] hover:border-white/20 font-semibold text-base sm:text-lg px-8 sm:px-10 py-6 sm:py-7 min-h-[52px] btn-3d-lift transition-all duration-500">
                   Log In
                 </Button>
               </Link>
@@ -187,119 +206,107 @@ const Index = () => {
 
       {/* Features Section */}
       <section className="py-20 sm:py-28 bg-background relative">
-        {/* Subtle ambient light */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-accent/3 rounded-full blur-[200px] pointer-events-none" />
+        {/* Floating orbs */}
+        <FloatingOrbs variant="subtle" />
+        
+        {/* Subtle ambient light with parallax */}
+        <div 
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-accent/3 rounded-full blur-[200px] pointer-events-none"
+          style={{ transform: `translate(-50%, calc(-50% + ${featuresParallax}px))` }}
+        />
         
         <div className="container mx-auto px-4 sm:px-6 relative z-10">
-          <motion.div 
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-            className="text-center mb-14 sm:mb-20"
-          >
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-semibold text-foreground mb-4 sm:mb-5 tracking-tight">
-              Everything You Need to
-              <span className="text-gradient-primary"> Stand Out</span>
-            </h2>
-            <p className="text-base sm:text-xl text-muted-foreground max-w-2xl mx-auto px-2">
-              A complete platform designed specifically for students to manage, showcase, and leverage their academic achievements.
-            </p>
-          </motion.div>
+          <ScrollReveal3D depth={80}>
+            <div className="text-center mb-14 sm:mb-20">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-semibold text-foreground mb-4 sm:mb-5 tracking-tight">
+                Everything You Need to
+                <span className="text-gradient-primary"> Stand Out</span>
+              </h2>
+              <p className="text-base sm:text-xl text-muted-foreground max-w-2xl mx-auto px-2">
+                A complete platform designed specifically for students to manage, showcase, and leverage their academic achievements.
+              </p>
+            </div>
+          </ScrollReveal3D>
 
-          <motion.div 
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-50px" }}
-            className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6"
-          >
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 perspective-1200">
             {features.map((feature, index) => (
-              <motion.div
-                key={index}
-                variants={itemVariants}
-                className="feature-card group"
+              <ScrollReveal3D 
+                key={index} 
+                delay={index * 0.08}
+                direction={index % 3 === 0 ? "left" : index % 3 === 2 ? "right" : "up"}
               >
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center mb-5 sm:mb-7 transition-all duration-700 group-hover:bg-accent/15 group-hover:border-accent/35 group-hover:shadow-glow">
-                  <feature.icon className="w-7 h-7 sm:w-8 sm:h-8 text-accent" />
-                </div>
-                <h3 className="text-xl sm:text-2xl font-display font-semibold text-foreground mb-3 sm:mb-4 tracking-tight">
-                  {feature.title}
-                </h3>
-                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                  {feature.description}
-                </p>
-              </motion.div>
+                <Tilt3DCard maxTilt={5} scale={1.015}>
+                  <div className="feature-card group">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center mb-5 sm:mb-7 transition-all duration-700 group-hover:bg-accent/15 group-hover:border-accent/35 group-hover:shadow-glow float-3d">
+                      <feature.icon className="w-7 h-7 sm:w-8 sm:h-8 text-accent" />
+                    </div>
+                    <h3 className="text-xl sm:text-2xl font-display font-semibold text-foreground mb-3 sm:mb-4 tracking-tight">
+                      {feature.title}
+                    </h3>
+                    <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+                      {feature.description}
+                    </p>
+                  </div>
+                </Tilt3DCard>
+              </ScrollReveal3D>
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
 
       {/* How It Works Section */}
       <section className="py-20 sm:py-28 bg-secondary/30 relative overflow-hidden">
+        <FloatingOrbs variant="subtle" />
+        
         {/* Light bloom effects */}
         <div className="absolute top-0 right-[20%] w-[400px] h-[400px] bg-plasma/5 rounded-full blur-[150px] pointer-events-none" />
         <div className="absolute bottom-0 left-[10%] w-[350px] h-[350px] bg-accent/4 rounded-full blur-[120px] pointer-events-none" />
         
         <div className="container mx-auto px-4 sm:px-6 relative z-10">
-          <motion.div 
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-            className="text-center mb-14 sm:mb-20"
-          >
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-semibold text-foreground mb-4 sm:mb-5 tracking-tight">
-              Simple Steps to Success
-            </h2>
-            <p className="text-base sm:text-xl text-muted-foreground">
-              Get your professional portfolio up and running in minutes
-            </p>
-          </motion.div>
+          <ScrollReveal3D depth={60}>
+            <div className="text-center mb-14 sm:mb-20">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-semibold text-foreground mb-4 sm:mb-5 tracking-tight">
+                Simple Steps to Success
+              </h2>
+              <p className="text-base sm:text-xl text-muted-foreground">
+                Get your professional portfolio up and running in minutes
+              </p>
+            </div>
+          </ScrollReveal3D>
 
           <div className="max-w-4xl mx-auto">
-            <motion.div 
-              variants={containerVariants}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-50px" }}
-              className="grid sm:grid-cols-3 gap-10 sm:gap-14"
-            >
+            <div className="grid sm:grid-cols-3 gap-10 sm:gap-14 perspective-1200">
               {[
                 { step: "01", title: "Create Account", desc: "Sign up securely with email verification" },
                 { step: "02", title: "Add Your Data", desc: "Upload certificates, skills, and projects" },
                 { step: "03", title: "Generate & Share", desc: "Create AI-powered resumes instantly" }
               ].map((item, index) => (
-                <motion.div 
-                  key={index} 
-                  variants={itemVariants}
-                  className="text-center relative group"
-                >
-                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full lumina-border bg-background/80 backdrop-blur-xl flex items-center justify-center mx-auto mb-6 sm:mb-8 transition-all duration-700 group-hover:shadow-glow">
-                    <span className="text-2xl sm:text-3xl font-mono font-semibold lumina-text">{item.step}</span>
-                  </div>
-                  <h3 className="text-xl sm:text-2xl font-display font-semibold text-foreground mb-3 tracking-tight">{item.title}</h3>
-                  <p className="text-sm sm:text-base text-muted-foreground">{item.desc}</p>
-                </motion.div>
+                <ScrollReveal3D key={index} delay={index * 0.15} depth={80}>
+                  <Tilt3DCard maxTilt={8} scale={1.03}>
+                    <div className="text-center relative group">
+                      <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full lumina-border bg-background/80 backdrop-blur-xl flex items-center justify-center mx-auto mb-6 sm:mb-8 transition-all duration-700 group-hover:shadow-glow float-3d">
+                        <span className="text-2xl sm:text-3xl font-mono font-semibold lumina-text">{item.step}</span>
+                      </div>
+                      <h3 className="text-xl sm:text-2xl font-display font-semibold text-foreground mb-3 tracking-tight">{item.title}</h3>
+                      <p className="text-sm sm:text-base text-muted-foreground">{item.desc}</p>
+                    </div>
+                  </Tilt3DCard>
+                </ScrollReveal3D>
               ))}
-            </motion.div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
       <section className="py-20 sm:py-28 hero-cinematic relative overflow-hidden">
+        <FloatingOrbs variant="dense" />
+        
         {/* Ethereal ambient effects */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-accent/8 rounded-full blur-[180px] pointer-events-none" />
         <div className="absolute top-[20%] right-[10%] w-[300px] h-[300px] bg-plasma/6 rounded-full blur-[120px] pointer-events-none" />
         
-        <motion.div 
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-          className="container mx-auto px-4 sm:px-6 text-center relative z-10"
-        >
+        <ScrollReveal3D depth={100} className="container mx-auto px-4 sm:px-6 text-center relative z-10">
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-semibold text-foreground mb-5 sm:mb-7 tracking-tight">
             Ready to Showcase Your Potential?
           </h2>
@@ -307,12 +314,12 @@ const Index = () => {
             Join thousands of students who are already building their professional future with ProFolioX.
           </p>
           <Link to="/signup" className="inline-block">
-            <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold text-base sm:text-lg px-10 sm:px-12 py-6 sm:py-7 min-h-[52px] btn-glow shadow-glow animate-glow-pulse transition-all duration-500 hover:shadow-bloom">
+            <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold text-base sm:text-lg px-10 sm:px-12 py-6 sm:py-7 min-h-[52px] btn-glow btn-3d-lift shadow-glow animate-glow-pulse transition-all duration-500 hover:shadow-bloom">
               Start Building Your Portfolio
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
           </Link>
-        </motion.div>
+        </ScrollReveal3D>
       </section>
 
       {/* Footer */}
