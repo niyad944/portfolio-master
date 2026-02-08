@@ -8,6 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { GraduationCap, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
 import { logActivity } from "@/hooks/useActivityLogger";
+import FloatingOrbs from "@/components/effects/FloatingOrbs";
+import Tilt3DCard from "@/components/effects/Tilt3DCard";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -33,7 +35,6 @@ const Login = () => {
           variant: "destructive",
         });
       } else if (data.user) {
-        // Log successful login
         await logActivity(data.user.id, "login");
         
         toast({
@@ -155,7 +156,7 @@ const Login = () => {
             <motion.div variants={itemVariants}>
               <Button
                 type="submit"
-                className="w-full h-12 sm:h-14 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold text-base min-h-[48px] btn-glow shadow-glow rounded-xl transition-all duration-500 hover:shadow-bloom"
+                className="w-full h-12 sm:h-14 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold text-base min-h-[48px] btn-glow btn-3d-lift shadow-glow rounded-xl transition-all duration-500 hover:shadow-bloom"
                 disabled={loading}
               >
                 {loading ? (
@@ -184,6 +185,8 @@ const Login = () => {
 
       {/* Right Side - Visual */}
       <div className="hidden lg:flex flex-1 hero-cinematic items-center justify-center p-12 relative overflow-hidden">
+        <FloatingOrbs variant="hero" />
+        
         {/* Ethereal ambient effects */}
         <div className="absolute top-[20%] right-[25%] w-[350px] h-[350px] bg-accent/10 rounded-full blur-[130px] pointer-events-none animate-bloom" />
         <div className="absolute bottom-[25%] left-[20%] w-[280px] h-[280px] bg-plasma/8 rounded-full blur-[110px] pointer-events-none" />
@@ -194,9 +197,11 @@ const Login = () => {
           transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
           className="max-w-lg text-center relative z-10"
         >
-          <div className="w-28 h-28 rounded-2xl lumina-border bg-background/60 backdrop-blur-xl flex items-center justify-center mx-auto mb-10 shadow-glow">
-            <GraduationCap className="w-14 h-14 text-accent" />
-          </div>
+          <Tilt3DCard maxTilt={6} scale={1.02} className="inline-block">
+            <div className="w-28 h-28 rounded-2xl lumina-border bg-background/60 backdrop-blur-xl flex items-center justify-center mx-auto mb-10 shadow-glow float-3d">
+              <GraduationCap className="w-14 h-14 text-accent" />
+            </div>
+          </Tilt3DCard>
           <h2 className="text-3xl lg:text-4xl font-display font-semibold text-foreground mb-5 tracking-tight">
             Your Professional Portfolio Awaits
           </h2>

@@ -21,6 +21,7 @@ import { NavLink } from "@/components/NavLink";
 import SecurityAlert from "@/components/security/SecurityAlert";
 import { checkSuspiciousActivity, logActivity } from "@/hooks/useActivityLogger";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
+import FloatingOrbs from "@/components/effects/FloatingOrbs";
 
 const Dashboard = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -38,7 +39,6 @@ const Dashboard = () => {
     const checkSecurityAndSetUser = async (currentUser: SupabaseUser) => {
       setUser(currentUser);
       
-      // Check for suspicious activity
       const securityCheck = await checkSuspiciousActivity(currentUser.id);
       
       if (securityCheck.newDevice) {
@@ -111,8 +111,9 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen flex w-full bg-background overflow-x-hidden noise-overlay">
-      {/* Ambient background effects */}
+      {/* Ambient background effects with floating orbs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <FloatingOrbs variant="subtle" />
         <div className="absolute top-[10%] left-[5%] w-[400px] h-[400px] bg-accent/4 rounded-full blur-[150px]" />
         <div className="absolute bottom-[10%] right-[10%] w-[350px] h-[350px] bg-plasma/3 rounded-full blur-[130px]" />
       </div>
