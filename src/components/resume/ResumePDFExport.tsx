@@ -98,14 +98,19 @@ const ResumePDFExport = ({ content, templateKey = "professional", onGenerated }:
                 <h1 className={style.nameClass}>
                   {profile?.full_name || "Your Name"}
                 </h1>
-                <div className={`${style.contactClass} space-x-2 mt-1`}>
-                  {profile?.email && <span>{profile.email}</span>}
-                  {profile?.phone && <span>· {profile.phone}</span>}
-                  {profile?.location && <span>· {profile.location}</span>}
-                </div>
+                {templateKey === "creative" ? (
+                  <p className="text-xs text-gray-400 mt-1 font-mono">Portfolio & Resume</p>
+                ) : null}
+                {style.layout !== "two-col" && (
+                  <div className={`${style.contactClass} space-x-2 mt-1`}>
+                    {profile?.email && <span>{profile.email}</span>}
+                    {profile?.phone && <span>· {profile.phone}</span>}
+                    {profile?.location && <span>· {profile.location}</span>}
+                  </div>
+                )}
               </div>
-              {style.layout === "two-col" && (
-                <div className={`${style.contactClass} text-right`}>
+              {(style.layout === "two-col" || style.layout === "sidebar") && templateKey !== "modern" && (
+                <div className={`${style.contactClass}`}>
                   {profile?.email && <div>{profile.email}</div>}
                   {profile?.phone && <div>{profile.phone}</div>}
                   {profile?.location && <div>{profile.location}</div>}
@@ -113,43 +118,43 @@ const ResumePDFExport = ({ content, templateKey = "professional", onGenerated }:
               )}
             </div>
 
+            {/* Bio - always full width */}
+            {profile?.bio && (
+              <div className={`mb-5 ${templateKey === "creative" ? "pb-4 border-b border-gray-200" : ""}`}>
+                {templateKey !== "creative" && (
+                  <h2 className={style.sectionTitleClass}>
+                    {templateKey === "professional" ? "Professional Summary" : "Summary"}
+                  </h2>
+                )}
+                <p className={`text-sm ${templateKey === "minimal" ? "text-gray-500 font-light leading-relaxed" : "text-gray-600"}`}>{profile.bio}</p>
+              </div>
+            )}
+
             {/* Preview Content */}
-            <div className={style.layout === "two-col" ? "grid grid-cols-2 gap-6" : ""}>
+            <div className={style.layout === "two-col" ? "grid grid-cols-[1fr_220px] gap-8" : ""}>
               <div>
-                {profile?.bio && (
+                {templateKey === "professional" && skills && skills.length > 0 && (
                   <div className="mb-5">
-                    <h2 className={style.sectionTitleClass}>
-                      {templateKey === "minimal" ? "// Summary" : "Professional Summary"}
-                    </h2>
-                    <p className="text-sm text-gray-600">{profile.bio}</p>
+                    <h2 className={style.sectionTitleClass}>Core Competencies</h2>
+                    <p className="text-sm text-gray-600">{skills.map(s => s.name).join("  |  ")}</p>
                   </div>
                 )}
 
-                {skills && skills.length > 0 && (
+                {templateKey === "minimal" && skills && skills.length > 0 && (
                   <div className="mb-5">
-                    <h2 className={style.sectionTitleClass}>
-                      {templateKey === "minimal" ? "// Tech Stack" : templateKey === "creative" ? "Expertise" : "Skills"}
-                    </h2>
-                    <div className="flex flex-wrap gap-2">
-                      {skills.map((s, i) => (
-                        <span key={i} className={style.skillClass}>
-                          {s.name}
-                        </span>
-                      ))}
-                    </div>
+                    <h2 className={style.sectionTitleClass}>Skills</h2>
+                    <p className="text-sm text-gray-500 font-light">{skills.map(s => s.name).join(", ")}</p>
                   </div>
                 )}
 
                 {education && education.length > 0 && (
                   <div className="mb-5">
-                    <h2 className={style.sectionTitleClass}>
-                      {templateKey === "minimal" ? "// Education" : "Education"}
-                    </h2>
+                    <h2 className={style.sectionTitleClass}>Education</h2>
                     {education.map((e, i) => (
-                      <div key={i} className="mb-3">
+                      <div key={i} className={`mb-3 ${templateKey === "minimal" ? "mb-4" : ""}`}>
                         <div className="flex justify-between">
                           <span className="font-medium text-sm text-gray-900">{e.degree} {e.field_of_study && `in ${e.field_of_study}`}</span>
-                          <span className="text-xs text-gray-500">
+                          <span className={`text-xs text-gray-500 ${templateKey === "creative" ? "font-mono" : templateKey === "professional" ? "italic" : ""}`}>
                             {e.start_date} – {e.end_date || "Present"}
                           </span>
                         </div>
@@ -158,22 +163,24 @@ const ResumePDFExport = ({ content, templateKey = "professional", onGenerated }:
                     ))}
                   </div>
                 )}
-              </div>
 
-              <div>
                 {projects && projects.length > 0 && (
                   <div className="mb-5">
-                    <h2 className={style.sectionTitleClass}>
-                      {templateKey === "minimal" ? "// Projects" : templateKey === "creative" ? "Selected Projects" : "Projects"}
-                    </h2>
+                    <h2 className={style.sectionTitleClass}>Projects</h2>
                     {projects.map((p, i) => (
                       <div key={i} className="mb-3">
                         <p className="font-medium text-sm text-gray-900">{p.title}</p>
                         {p.description && <p className="text-sm text-gray-500">{p.description}</p>}
                         {p.technologies?.length > 0 && (
-                          <p className={`text-xs mt-1 ${style.accentColor}`}>
-                            {p.technologies.join(templateKey === "minimal" ? ", " : " · ")}
-                          </p>
+                          templateKey === "creative" ? (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {p.technologies.map((t, j) => <span key={j} className={style.skillClass}>{t}</span>)}
+                            </div>
+                          ) : (
+                            <p className={`text-xs mt-1 ${style.accentColor}`}>
+                              {p.technologies.join(", ")}
+                            </p>
+                          )
                         )}
                       </div>
                     ))}
@@ -182,9 +189,7 @@ const ResumePDFExport = ({ content, templateKey = "professional", onGenerated }:
 
                 {achievements && achievements.length > 0 && (
                   <div className="mb-5">
-                    <h2 className={style.sectionTitleClass}>
-                      {templateKey === "minimal" ? "// Achievements" : templateKey === "creative" ? "Honors & Awards" : "Achievements"}
-                    </h2>
+                    <h2 className={style.sectionTitleClass}>Achievements</h2>
                     {achievements.map((a, i) => (
                       <div key={i} className="mb-3">
                         <p className="font-medium text-sm text-gray-900">{a.title}</p>
@@ -195,6 +200,18 @@ const ResumePDFExport = ({ content, templateKey = "professional", onGenerated }:
                   </div>
                 )}
               </div>
+
+              {/* Side column for creative template */}
+              {style.layout === "two-col" && skills && skills.length > 0 && (
+                <div>
+                  <h2 className={style.sectionTitleClass}>Tech Stack</h2>
+                  <div className="flex flex-wrap gap-1.5">
+                    {skills.map((s, i) => (
+                      <span key={i} className={style.skillClass}>{s.name}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </DialogContent>
