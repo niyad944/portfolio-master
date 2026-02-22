@@ -20,6 +20,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import AISuggestionPanel from "@/components/resume/AISuggestionPanel";
 import ResumePDFExport from "@/components/resume/ResumePDFExport";
+import { getResumeHTML } from "@/components/resume/resumeTemplates";
 import PublicPortfolioSettings from "@/components/portfolio/PublicPortfolioSettings";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import {
@@ -167,109 +168,13 @@ const ResumeGenerator = () => {
   };
 
   const downloadResume = (content: any) => {
-    const { profile, skills, education, projects, achievements } = content;
-
-    const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>${profile?.full_name || "Resume"} - Resume</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 40px; }
-    .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #0d9488; }
-    .name { font-size: 32px; font-weight: 700; color: #1a365d; margin-bottom: 8px; }
-    .contact { font-size: 14px; color: #666; }
-    .contact a { color: #0d9488; text-decoration: none; }
-    .section { margin-bottom: 25px; }
-    .section-title { font-size: 16px; font-weight: 600; color: #0d9488; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; padding-bottom: 5px; border-bottom: 1px solid #e2e8f0; }
-    .bio { font-size: 14px; color: #555; text-align: justify; }
-    .skills-list { display: flex; flex-wrap: wrap; gap: 8px; }
-    .skill { background: #f0fdfa; color: #0d9488; padding: 4px 12px; border-radius: 15px; font-size: 13px; }
-    .edu-item, .project-item, .achievement-item { margin-bottom: 15px; }
-    .item-title { font-weight: 600; color: #1a365d; }
-    .item-subtitle { font-size: 14px; color: #666; }
-    .item-date { font-size: 12px; color: #888; }
-    .item-desc { font-size: 13px; color: #555; margin-top: 5px; }
-    .tech-stack { font-size: 12px; color: #0d9488; margin-top: 5px; }
-    @media print { body { padding: 20px; } }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <div class="name">${profile?.full_name || "Your Name"}</div>
-    <div class="contact">
-      ${profile?.email ? `<span>${profile.email}</span>` : ""}
-      ${profile?.phone ? ` • <span>${profile.phone}</span>` : ""}
-      ${profile?.location ? ` • <span>${profile.location}</span>` : ""}
-      ${profile?.linkedin_url ? ` • <a href="${profile.linkedin_url}">LinkedIn</a>` : ""}
-      ${profile?.github_url ? ` • <a href="${profile.github_url}">GitHub</a>` : ""}
-    </div>
-  </div>
-
-  ${profile?.bio ? `
-  <div class="section">
-    <div class="section-title">Professional Summary</div>
-    <p class="bio">${profile.bio}</p>
-  </div>
-  ` : ""}
-
-  ${skills.length > 0 ? `
-  <div class="section">
-    <div class="section-title">Skills</div>
-    <div class="skills-list">
-      ${skills.map((s: any) => `<span class="skill">${s.name}</span>`).join("")}
-    </div>
-  </div>
-  ` : ""}
-
-  ${education.length > 0 ? `
-  <div class="section">
-    <div class="section-title">Education</div>
-    ${education.map((e: any) => `
-    <div class="edu-item">
-      <div class="item-title">${e.degree}${e.field_of_study ? ` in ${e.field_of_study}` : ""}</div>
-      <div class="item-subtitle">${e.institution}</div>
-      <div class="item-date">${e.start_date || ""} - ${e.end_date || "Present"}${e.grade ? ` • ${e.grade}` : ""}</div>
-    </div>
-    `).join("")}
-  </div>
-  ` : ""}
-
-  ${projects.length > 0 ? `
-  <div class="section">
-    <div class="section-title">Projects</div>
-    ${projects.map((p: any) => `
-    <div class="project-item">
-      <div class="item-title">${p.title}</div>
-      ${p.description ? `<div class="item-desc">${p.description}</div>` : ""}
-      ${p.technologies?.length ? `<div class="tech-stack">Technologies: ${p.technologies.join(", ")}</div>` : ""}
-    </div>
-    `).join("")}
-  </div>
-  ` : ""}
-
-  ${achievements.length > 0 ? `
-  <div class="section">
-    <div class="section-title">Achievements</div>
-    ${achievements.map((a: any) => `
-    <div class="achievement-item">
-      <div class="item-title">${a.title}</div>
-      ${a.issuer ? `<div class="item-subtitle">${a.issuer}</div>` : ""}
-      ${a.description ? `<div class="item-desc">${a.description}</div>` : ""}
-    </div>
-    `).join("")}
-  </div>
-  ` : ""}
-</body>
-</html>`;
+    const html = getResumeHTML(selectedTemplate, content);
 
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${profile?.full_name?.replace(/\s+/g, "_") || "resume"}_Resume.html`;
+    a.download = `${content.profile?.full_name?.replace(/\s+/g, "_") || "resume"}_Resume.html`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -489,6 +394,7 @@ const ResumeGenerator = () => {
           <div className="mb-6">
             <ResumePDFExport
               content={resumeData}
+              templateKey={selectedTemplate}
               onGenerated={() => {
                 toast({
                   title: "PDF Ready!",
