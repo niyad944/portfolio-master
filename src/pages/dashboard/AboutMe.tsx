@@ -18,10 +18,21 @@ import {
   Phone,
   Linkedin,
   Github,
-  Globe
+  Globe,
+  Upload,
+  Eye,
+  Trash2,
+  Pencil,
+  CalendarIcon,
+  Trophy,
+  Medal
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface DashboardContext {
@@ -57,10 +68,14 @@ interface Education {
 
 interface Achievement {
   id: string;
-  title: string;
-  description: string;
+  event_name: string;
+  venue: string;
   date_achieved: string;
-  issuer: string;
+  achievement_level: string;
+  achievement_type: string;
+  position: string | null;
+  certificate_url: string | null;
+  title: string;
 }
 
 const AboutMe = () => {
@@ -87,9 +102,12 @@ const AboutMe = () => {
   const [newEducation, setNewEducation] = useState<Omit<Education, "id">>({
     institution: "", degree: "", field_of_study: "", start_date: "", end_date: "", grade: ""
   });
-  const [newAchievement, setNewAchievement] = useState<Omit<Achievement, "id">>({
-    title: "", description: "", date_achieved: "", issuer: ""
+  const [newAchievement, setNewAchievement] = useState({
+    event_name: "", venue: "", date_achieved: "", achievement_level: "college",
+    achievement_type: "participation", position: "", title: ""
   });
+  const [achievementFile, setAchievementFile] = useState<File | null>(null);
+  const [uploadingAchievement, setUploadingAchievement] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -187,10 +205,44 @@ const AboutMe = () => {
   };
 
   const addAchievement = async () => {
-    if (!newAchievement.title.trim()) return;
+    if (!newAchievement.event_name.trim() || !newAchievement.venue.trim() || !newAchievement.date_achieved) return;
+
+    setUploadingAchievement(true);
+    let certificateUrl: string | null = null;
+
+    // Upload certificate file if provided
+    if (achievementFile) {
+      const fileExt = achievementFile.name.split(".").pop();
+      const filePath = `${user.id}/achievements/${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage
+        .from("certificates")
+        .upload(filePath, achievementFile);
+
+      if (uploadError) {
+        toast({ title: "Upload Error", description: uploadError.message, variant: "destructive" });
+        setUploadingAchievement(false);
+        return;
+      }
+
+      const { data: urlData } = supabase.storage.from("certificates").getPublicUrl(filePath);
+      certificateUrl = urlData.publicUrl;
+    }
+
+    const insertData = {
+      event_name: newAchievement.event_name,
+      venue: newAchievement.venue,
+      date_achieved: newAchievement.date_achieved,
+      achievement_level: newAchievement.achievement_level,
+      achievement_type: newAchievement.achievement_type,
+      position: newAchievement.achievement_type === "winning" ? newAchievement.position || null : null,
+      certificate_url: certificateUrl,
+      title: newAchievement.event_name,
+      user_id: user.id,
+    };
+
     const { data, error } = await supabase
       .from("achievements")
-      .insert({ ...newAchievement, user_id: user.id })
+      .insert(insertData)
       .select()
       .single();
 
@@ -198,17 +250,41 @@ const AboutMe = () => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else if (data) {
       setAchievements([data, ...achievements]);
-      setNewAchievement({ title: "", description: "", date_achieved: "", issuer: "" });
+      setNewAchievement({
+        event_name: "", venue: "", date_achieved: "", achievement_level: "college",
+        achievement_type: "participation", position: "", title: ""
+      });
+      setAchievementFile(null);
       toast({ title: "Achievement Added" });
     }
+    setUploadingAchievement(false);
   };
 
   const removeAchievement = async (id: string) => {
+    const ach = achievements.find(a => a.id === id);
+    // Delete certificate file from storage if exists
+    if (ach?.certificate_url) {
+      const path = ach.certificate_url.split("/certificates/").pop();
+      if (path) {
+        await supabase.storage.from("certificates").remove([decodeURIComponent(path)]);
+      }
+    }
     const { error } = await supabase.from("achievements").delete().eq("id", id);
     if (!error) {
       setAchievements(achievements.filter(a => a.id !== id));
       toast({ title: "Achievement Removed" });
     }
+  };
+
+  const getLevelBadgeColor = (level: string) => {
+    const colors: Record<string, string> = {
+      college: "bg-secondary text-secondary-foreground",
+      zonal: "bg-accent/15 text-accent",
+      state: "bg-accent/25 text-accent",
+      national: "bg-accent/35 text-accent",
+      international: "bg-accent/50 text-accent-foreground",
+    };
+    return colors[level] || "bg-secondary text-secondary-foreground";
   };
 
   if (loading) {
@@ -327,8 +403,8 @@ const AboutMe = () => {
       {/* Skills Section */}
       <section className="glass-card rounded-2xl p-4 sm:p-8 mb-6 sm:mb-8">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center">
-            <Award className="w-5 h-5 text-purple-500" />
+          <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center">
+            <Award className="w-5 h-5 text-accent" />
           </div>
           <h2 className="text-lg sm:text-xl font-semibold text-foreground">Skills</h2>
         </div>
@@ -466,58 +542,224 @@ const AboutMe = () => {
       <section className="glass-card rounded-2xl p-4 sm:p-8">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
-            <Award className="w-5 h-5 text-accent" />
+            <Trophy className="w-5 h-5 text-accent" />
           </div>
           <h2 className="text-lg sm:text-xl font-semibold text-foreground">Achievements</h2>
         </div>
 
-        <div className="space-y-4 mb-6">
+        {/* Achievement Cards */}
+        <div className="grid sm:grid-cols-2 gap-4 mb-6">
           {achievements.map((ach) => (
-            <div key={ach.id} className="p-4 border border-border rounded-xl flex justify-between items-start">
-              <div>
-                <h3 className="font-semibold text-foreground">{ach.title}</h3>
-                {ach.issuer && <p className="text-muted-foreground">{ach.issuer}</p>}
-                {ach.description && <p className="text-sm text-muted-foreground mt-1">{ach.description}</p>}
-                {ach.date_achieved && <p className="text-xs text-muted-foreground mt-1">{ach.date_achieved}</p>}
+            <div key={ach.id} className="p-5 border border-border rounded-xl bg-card/30 hover:border-accent/20 transition-all duration-300">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  {ach.achievement_type === "winning" ? (
+                    <Medal className="w-5 h-5 text-accent" />
+                  ) : (
+                    <Award className="w-5 h-5 text-muted-foreground" />
+                  )}
+                  <h3 className="font-semibold text-foreground text-sm">{ach.event_name || ach.title}</h3>
+                </div>
+                <button onClick={() => removeAchievement(ach.id)} className="text-muted-foreground hover:text-destructive transition-colors">
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
-              <button onClick={() => removeAchievement(ach.id)} className="text-muted-foreground hover:text-destructive">
-                <X className="w-4 h-4" />
-              </button>
+
+              <p className="text-sm text-muted-foreground mb-2">{ach.venue}</p>
+
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                {ach.achievement_level && (
+                  <span className={cn("text-xs px-2.5 py-1 rounded-full font-medium capitalize", getLevelBadgeColor(ach.achievement_level))}>
+                    {ach.achievement_level === "state" ? "State (University)" : ach.achievement_level}
+                  </span>
+                )}
+                {ach.achievement_type && (
+                  <span className={cn(
+                    "text-xs px-2.5 py-1 rounded-full font-medium capitalize",
+                    ach.achievement_type === "winning" ? "bg-accent/20 text-accent" : "bg-secondary text-secondary-foreground"
+                  )}>
+                    {ach.achievement_type}
+                  </span>
+                )}
+                {ach.achievement_type === "winning" && ach.position && (
+                  <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-accent/30 text-accent">
+                    {ach.position}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between">
+                {ach.date_achieved && (
+                  <p className="text-xs text-muted-foreground">
+                    {ach.date_achieved}
+                  </p>
+                )}
+                {ach.certificate_url && (
+                  <a
+                    href={ach.certificate_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs text-accent hover:text-accent/80 transition-colors font-medium"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    View Certificate
+                  </a>
+                )}
+              </div>
             </div>
           ))}
-          {achievements.length === 0 && (
-            <p className="text-muted-foreground text-sm">No achievements added yet.</p>
-          )}
         </div>
 
-        <div className="grid md:grid-cols-2 gap-4 p-4 border border-dashed border-border rounded-xl">
-          <Input
-            value={newAchievement.title}
-            onChange={(e) => setNewAchievement({ ...newAchievement, title: e.target.value })}
-            placeholder="Achievement title"
-            className="input-focus"
-          />
-          <Input
-            value={newAchievement.issuer}
-            onChange={(e) => setNewAchievement({ ...newAchievement, issuer: e.target.value })}
-            placeholder="Issuing organization"
-            className="input-focus"
-          />
-          <Input
-            type="date"
-            value={newAchievement.date_achieved}
-            onChange={(e) => setNewAchievement({ ...newAchievement, date_achieved: e.target.value })}
-            className="input-focus"
-          />
-          <Textarea
-            value={newAchievement.description}
-            onChange={(e) => setNewAchievement({ ...newAchievement, description: e.target.value })}
-            placeholder="Description (optional)"
-            className="md:col-span-2 input-focus"
-          />
-          <Button onClick={addAchievement} variant="outline" className="md:col-span-2">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Achievement
+        {achievements.length === 0 && (
+          <p className="text-muted-foreground text-sm mb-6">No achievements added yet. Add your first achievement below.</p>
+        )}
+
+        {/* Add Achievement Form */}
+        <div className="p-4 sm:p-5 border border-dashed border-border rounded-xl space-y-4">
+          <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
+            <div className="space-y-2">
+              <Label>Event Name <span className="text-destructive">*</span></Label>
+              <Input
+                value={newAchievement.event_name}
+                onChange={(e) => setNewAchievement({ ...newAchievement, event_name: e.target.value })}
+                placeholder="e.g. National Hackathon 2024"
+                className="input-focus"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Venue / Organized By <span className="text-destructive">*</span></Label>
+              <Input
+                value={newAchievement.venue}
+                onChange={(e) => setNewAchievement({ ...newAchievement, venue: e.target.value })}
+                placeholder="e.g. IIT Bombay"
+                className="input-focus"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Date <span className="text-destructive">*</span></Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !newAchievement.date_achieved && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {newAchievement.date_achieved
+                      ? format(new Date(newAchievement.date_achieved), "PPP")
+                      : "Pick a date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={newAchievement.date_achieved ? new Date(newAchievement.date_achieved) : undefined}
+                    onSelect={(date) =>
+                      setNewAchievement({
+                        ...newAchievement,
+                        date_achieved: date ? format(date, "yyyy-MM-dd") : "",
+                      })
+                    }
+                    disabled={(date) => date > new Date()}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="space-y-2">
+              <Label>Achievement Level</Label>
+              <Select
+                value={newAchievement.achievement_level}
+                onValueChange={(value) => setNewAchievement({ ...newAchievement, achievement_level: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="college">College</SelectItem>
+                  <SelectItem value="zonal">Zonal</SelectItem>
+                  <SelectItem value="state">State (University)</SelectItem>
+                  <SelectItem value="national">National</SelectItem>
+                  <SelectItem value="international">International</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Achievement Type</Label>
+              <Select
+                value={newAchievement.achievement_type}
+                onValueChange={(value) => setNewAchievement({ ...newAchievement, achievement_type: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="participation">Participation</SelectItem>
+                  <SelectItem value="winning">Winning</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {newAchievement.achievement_type === "winning" && (
+              <div className="space-y-2">
+                <Label>Position</Label>
+                <Input
+                  value={newAchievement.position}
+                  onChange={(e) => setNewAchievement({ ...newAchievement, position: e.target.value })}
+                  placeholder="e.g. 1st Place, Runner Up"
+                  className="input-focus"
+                />
+              </div>
+            )}
+
+            <div className={cn("space-y-2", newAchievement.achievement_type !== "winning" && "sm:col-span-2")}>
+              <Label>Certificate (PDF, JPG, PNG)</Label>
+              <div className="flex items-center gap-3">
+                <label className="flex-1 cursor-pointer">
+                  <div className="flex items-center gap-2 px-4 py-2.5 border border-dashed border-border rounded-lg hover:border-accent/40 transition-colors">
+                    <Upload className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground truncate">
+                      {achievementFile ? achievementFile.name : "Choose file..."}
+                    </span>
+                  </div>
+                  <input
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file && file.size > 10 * 1024 * 1024) {
+                        toast({ title: "File too large", description: "Max 10MB allowed", variant: "destructive" });
+                        return;
+                      }
+                      setAchievementFile(file || null);
+                    }}
+                  />
+                </label>
+                {achievementFile && (
+                  <button onClick={() => setAchievementFile(null)} className="text-muted-foreground hover:text-destructive">
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <Button
+            onClick={addAchievement}
+            variant="outline"
+            className="w-full"
+            disabled={uploadingAchievement || !newAchievement.event_name.trim() || !newAchievement.venue.trim() || !newAchievement.date_achieved}
+          >
+            {uploadingAchievement ? (
+              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+            ) : (
+              <Plus className="w-4 h-4 mr-2" />
+            )}
+            {uploadingAchievement ? "Uploading..." : "Add Achievement"}
           </Button>
         </div>
       </section>

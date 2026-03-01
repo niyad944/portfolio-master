@@ -16,31 +16,49 @@ export type Database = {
     Tables: {
       achievements: {
         Row: {
+          achievement_level: string | null
+          achievement_type: string | null
+          certificate_url: string | null
           created_at: string
           date_achieved: string | null
           description: string | null
+          event_name: string | null
           id: string
           issuer: string | null
+          position: string | null
           title: string
           user_id: string
+          venue: string | null
         }
         Insert: {
+          achievement_level?: string | null
+          achievement_type?: string | null
+          certificate_url?: string | null
           created_at?: string
           date_achieved?: string | null
           description?: string | null
+          event_name?: string | null
           id?: string
           issuer?: string | null
+          position?: string | null
           title: string
           user_id: string
+          venue?: string | null
         }
         Update: {
+          achievement_level?: string | null
+          achievement_type?: string | null
+          certificate_url?: string | null
           created_at?: string
           date_achieved?: string | null
           description?: string | null
+          event_name?: string | null
           id?: string
           issuer?: string | null
+          position?: string | null
           title?: string
           user_id?: string
+          venue?: string | null
         }
         Relationships: []
       }
