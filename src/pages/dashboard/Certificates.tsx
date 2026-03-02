@@ -11,11 +11,13 @@ import {
   FileText,
   Trash2,
   Download,
-  Eye,
   Loader2,
   X,
   Calendar,
-  Building2
+  Building2,
+  Sparkles,
+  CheckCircle2,
+  BookOpen,
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -25,6 +27,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface DashboardContext {
@@ -43,13 +46,24 @@ interface Certificate {
   created_at: string;
 }
 
+interface ExtractedData {
+  exam_type: string | null;
+  institution: string | null;
+  board_university: string | null;
+  year_of_passing: string | null;
+  total_marks: string | null;
+  marks_obtained: string | null;
+  percentage: string | null;
+  grade: string | null;
+}
+
 const certificateTypes = [
   { value: "degree", label: "Degree Certificate" },
   { value: "sslc", label: "SSLC Certificate" },
   { value: "hsc", label: "HSC Certificate" },
   { value: "internship", label: "Internship Certificate" },
   { value: "certification", label: "Professional Certification" },
-  { value: "other", label: "Other" }
+  { value: "other", label: "Other" },
 ];
 
 const Certificates = () => {
@@ -65,9 +79,17 @@ const Certificates = () => {
     name: "",
     type: "certification" as string,
     issuing_organization: "",
-    issue_date: ""
+    issue_date: "",
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  // AI analysis state
+  const [analyzingId, setAnalyzingId] = useState<string | null>(null);
+  const [extractedData, setExtractedData] = useState<ExtractedData | null>(null);
+  const [editableData, setEditableData] = useState<ExtractedData | null>(null);
+  const [analysisDialogOpen, setAnalysisDialogOpen] = useState(false);
+  const [applyingToResume, setApplyingToResume] = useState(false);
+  const [analyzedCert, setAnalyzedCert] = useState<Certificate | null>(null);
 
   useEffect(() => {
     fetchCertificates();
@@ -92,7 +114,7 @@ const Certificates = () => {
         toast({
           title: "File too large",
           description: "Please select a file smaller than 10MB",
-          variant: "destructive"
+          variant: "destructive",
         });
         return;
       }
@@ -105,7 +127,7 @@ const Certificates = () => {
       toast({
         title: "Missing information",
         description: "Please fill in the certificate name and type",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -145,7 +167,7 @@ const Certificates = () => {
           file_path: filePath,
           file_name: fileName,
           file_size: fileSize,
-          mime_type: mimeType
+          mime_type: mimeType,
         })
         .select()
         .single();
@@ -162,7 +184,7 @@ const Certificates = () => {
       toast({
         title: "Upload Failed",
         description: error.message,
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setUploading(false);
@@ -184,7 +206,7 @@ const Certificates = () => {
       const { error } = await supabase.from("certificates").delete().eq("id", cert.id);
       if (error) throw error;
 
-      setCertificates(certificates.filter(c => c.id !== cert.id));
+      setCertificates(certificates.filter((c) => c.id !== cert.id));
       toast({ title: "Certificate Deleted" });
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -213,6 +235,100 @@ const Certificates = () => {
     URL.revokeObjectURL(url);
   };
 
+  const analyzeCertificate = async (cert: Certificate) => {
+    if (!cert.file_path) {
+      toast({ title: "No file", description: "This certificate has no uploaded file to analyze.", variant: "destructive" });
+      return;
+    }
+
+    setAnalyzingId(cert.id);
+    setAnalyzedCert(cert);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("analyze-certificate", {
+        body: { filePath: cert.file_path, certificateId: cert.id },
+      });
+
+      if (error) throw error;
+
+      if (data?.extracted) {
+        setExtractedData(data.extracted);
+        setEditableData({ ...data.extracted });
+        setAnalysisDialogOpen(true);
+        toast({ title: "Academic data extracted successfully!", description: "Review and edit the extracted data below." });
+      } else {
+        toast({
+          title: "No data extracted",
+          description: "AI could not extract structured data from this certificate. Try a clearer scan.",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Analysis Failed",
+        description: error.message || "Failed to analyze certificate",
+        variant: "destructive",
+      });
+    } finally {
+      setAnalyzingId(null);
+    }
+  };
+
+  const applyToResume = async () => {
+    if (!editableData) return;
+
+    setApplyingToResume(true);
+    try {
+      // Check if an education record already exists for this institution
+      const { data: existing } = await supabase
+        .from("education")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("institution", editableData.institution || "")
+        .maybeSingle();
+
+      const educationRecord = {
+        user_id: user.id,
+        institution: editableData.institution || "Unknown Institution",
+        degree: editableData.exam_type || "Certificate",
+        field_of_study: editableData.board_university || null,
+        grade: editableData.percentage
+          ? `${editableData.percentage}%${editableData.grade ? ` (${editableData.grade})` : ""}`
+          : editableData.grade || null,
+        description: [
+          editableData.marks_obtained && editableData.total_marks
+            ? `Marks: ${editableData.marks_obtained}/${editableData.total_marks}`
+            : null,
+          editableData.board_university ? `Board/University: ${editableData.board_university}` : null,
+        ]
+          .filter(Boolean)
+          .join(" | ") || null,
+        start_date: editableData.year_of_passing ? `${editableData.year_of_passing}-01-01` : null,
+        end_date: editableData.year_of_passing ? `${editableData.year_of_passing}-12-31` : null,
+      };
+
+      if (existing?.id) {
+        const { error } = await supabase
+          .from("education")
+          .update(educationRecord)
+          .eq("id", existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("education").insert(educationRecord);
+        if (error) throw error;
+      }
+
+      toast({ title: "Applied to Resume!", description: "Education section has been updated with extracted data." });
+      setAnalysisDialogOpen(false);
+      setExtractedData(null);
+      setEditableData(null);
+    } catch (error: any) {
+      toast({ title: "Failed to apply", description: error.message, variant: "destructive" });
+    } finally {
+      setApplyingToResume(false);
+    }
+  };
+
   const formatFileSize = (bytes: number | null) => {
     if (!bytes) return "N/A";
     if (bytes < 1024) return `${bytes} B`;
@@ -221,7 +337,7 @@ const Certificates = () => {
   };
 
   const getTypeLabel = (type: string) => {
-    return certificateTypes.find(t => t.value === type)?.label || type;
+    return certificateTypes.find((t) => t.value === type)?.label || type;
   };
 
   if (loading) {
@@ -237,9 +353,7 @@ const Certificates = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 sm:mb-10">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Document Locker</h1>
-          <p className="text-muted-foreground">
-            Securely store and manage your academic certificates
-          </p>
+          <p className="text-muted-foreground">Securely store and manage your academic certificates</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
@@ -264,10 +378,7 @@ const Certificates = () => {
               </div>
               <div className="space-y-2">
                 <Label>Type *</Label>
-                <Select
-                  value={newCert.type}
-                  onValueChange={(value) => setNewCert({ ...newCert, type: value })}
-                >
+                <Select value={newCert.type} onValueChange={(value) => setNewCert({ ...newCert, type: value })}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -331,12 +442,8 @@ const Certificates = () => {
                   ) : (
                     <>
                       <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                      <p className="text-sm text-muted-foreground">
-                        Click to upload or drag and drop
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        PDF, JPG, PNG, DOC (max 10MB)
-                      </p>
+                      <p className="text-sm text-muted-foreground">Click to upload or drag and drop</p>
+                      <p className="text-xs text-muted-foreground mt-1">PDF, JPG, PNG, DOC (max 10MB)</p>
                     </>
                   )}
                 </div>
@@ -346,17 +453,111 @@ const Certificates = () => {
                 disabled={uploading}
                 className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
               >
-                {uploading ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : (
-                  <Upload className="w-4 h-4 mr-2" />
-                )}
+                {uploading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
                 {uploading ? "Uploading..." : "Add Certificate"}
               </Button>
             </div>
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* AI Analysis Results Dialog */}
+      <Dialog open={analysisDialogOpen} onOpenChange={setAnalysisDialogOpen}>
+        <DialogContent className="sm:max-w-[560px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-purple-500" />
+              AI Extracted Data
+              <Badge variant="secondary" className="text-xs">AI</Badge>
+            </DialogTitle>
+          </DialogHeader>
+          {editableData && (
+            <div className="space-y-4 mt-2">
+              <p className="text-sm text-muted-foreground">
+                Review and edit the extracted data, then apply it to your resume.
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Exam Type</Label>
+                  <Input
+                    value={editableData.exam_type || ""}
+                    onChange={(e) => setEditableData({ ...editableData, exam_type: e.target.value })}
+                    className="h-9 text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Institution</Label>
+                  <Input
+                    value={editableData.institution || ""}
+                    onChange={(e) => setEditableData({ ...editableData, institution: e.target.value })}
+                    className="h-9 text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Board / University</Label>
+                  <Input
+                    value={editableData.board_university || ""}
+                    onChange={(e) => setEditableData({ ...editableData, board_university: e.target.value })}
+                    className="h-9 text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Year of Passing</Label>
+                  <Input
+                    value={editableData.year_of_passing || ""}
+                    onChange={(e) => setEditableData({ ...editableData, year_of_passing: e.target.value })}
+                    className="h-9 text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Marks Obtained</Label>
+                  <Input
+                    value={editableData.marks_obtained || ""}
+                    onChange={(e) => setEditableData({ ...editableData, marks_obtained: e.target.value })}
+                    className="h-9 text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Total Marks</Label>
+                  <Input
+                    value={editableData.total_marks || ""}
+                    onChange={(e) => setEditableData({ ...editableData, total_marks: e.target.value })}
+                    className="h-9 text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Percentage</Label>
+                  <Input
+                    value={editableData.percentage || ""}
+                    onChange={(e) => setEditableData({ ...editableData, percentage: e.target.value })}
+                    className="h-9 text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Grade</Label>
+                  <Input
+                    value={editableData.grade || ""}
+                    onChange={(e) => setEditableData({ ...editableData, grade: e.target.value })}
+                    className="h-9 text-sm"
+                  />
+                </div>
+              </div>
+              <Button
+                onClick={applyToResume}
+                disabled={applyingToResume}
+                className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
+              >
+                {applyingToResume ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : (
+                  <BookOpen className="w-4 h-4 mr-2" />
+                )}
+                {applyingToResume ? "Applying..." : "Apply to Resume"}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Certificates Grid */}
       {certificates.length === 0 ? (
@@ -365,9 +566,7 @@ const Certificates = () => {
             <FolderLock className="w-8 h-8 text-accent" />
           </div>
           <h3 className="text-xl font-semibold text-foreground mb-2">No Certificates Yet</h3>
-          <p className="text-muted-foreground mb-6">
-            Start building your document locker by adding your first certificate
-          </p>
+          <p className="text-muted-foreground mb-6">Start building your document locker by adding your first certificate</p>
           <Button onClick={() => setDialogOpen(true)} className="bg-accent hover:bg-accent/90 text-accent-foreground">
             <Upload className="w-4 h-4 mr-2" />
             Add Your First Certificate
@@ -408,28 +607,44 @@ const Certificates = () => {
                 </p>
               )}
 
-              <div className="flex items-center gap-2 pt-4 border-t border-border">
-                {cert.file_path && (
-                  <>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => downloadCertificate(cert)}
-                      className="flex-1"
-                    >
+              <div className="flex flex-col gap-2 pt-4 border-t border-border">
+                <div className="flex items-center gap-2">
+                  {cert.file_path && (
+                    <Button size="sm" variant="outline" onClick={() => downloadCertificate(cert)} className="flex-1">
                       <Download className="w-4 h-4 mr-1" />
                       Download
                     </Button>
-                  </>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => deleteCertificate(cert)}
+                    className="text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+                {cert.file_path && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => analyzeCertificate(cert)}
+                    disabled={analyzingId === cert.id}
+                    className="w-full border-purple-500/30 text-purple-600 hover:bg-purple-500/10 dark:text-purple-400"
+                  >
+                    {analyzingId === cert.id ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin mr-1.5" />
+                        Analyzing with AI...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4 mr-1.5" />
+                        AI Auto-Fill Resume
+                      </>
+                    )}
+                  </Button>
                 )}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => deleteCertificate(cert)}
-                  className="text-muted-foreground hover:text-destructive"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
               </div>
             </div>
           ))}
