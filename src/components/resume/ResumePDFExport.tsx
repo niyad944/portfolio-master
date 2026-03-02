@@ -20,6 +20,7 @@ interface ResumeContent {
     linkedin_url: string;
     github_url: string;
     portfolio_url?: string;
+    profile_photo_url?: string;
   };
   skills: Array<{ name: string; proficiency_level: string; category?: string }>;
   education: Array<{
@@ -98,9 +99,17 @@ const ResumePDFExport = ({ content, templateKey = "professional", onGenerated }:
               {/* Left Sidebar */}
               <div className={`${style.sidebarBg} ${style.sidebarText} p-5`}>
                 {/* Avatar */}
-                <div className={`w-20 h-20 rounded-full ${style.avatarBg} flex items-center justify-center mx-auto mb-3`}>
-                  <span className={`text-2xl font-semibold ${style.avatarText}`}>{initials}</span>
-                </div>
+                {profile?.profile_photo_url ? (
+                  <img
+                    src={profile.profile_photo_url}
+                    alt="Profile"
+                    className="w-20 h-20 rounded-full object-cover mx-auto mb-3 border-2 border-white/20"
+                  />
+                ) : (
+                  <div className={`w-20 h-20 rounded-full ${style.avatarBg} flex items-center justify-center mx-auto mb-3`}>
+                    <span className={`text-2xl font-semibold ${style.avatarText}`}>{initials}</span>
+                  </div>
+                )}
                 <h1 className={`${style.nameClass} text-center mb-1 !text-base`}>
                   {profile?.full_name || "Your Name"}
                 </h1>

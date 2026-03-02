@@ -255,6 +255,7 @@ export type Database = {
           location: string | null
           phone: string | null
           portfolio_url: string | null
+          profile_photo_url: string | null
           public_slug: string | null
           updated_at: string
           user_id: string
@@ -273,6 +274,7 @@ export type Database = {
           location?: string | null
           phone?: string | null
           portfolio_url?: string | null
+          profile_photo_url?: string | null
           public_slug?: string | null
           updated_at?: string
           user_id: string
@@ -291,6 +293,7 @@ export type Database = {
           location?: string | null
           phone?: string | null
           portfolio_url?: string | null
+          profile_photo_url?: string | null
           public_slug?: string | null
           updated_at?: string
           user_id?: string
