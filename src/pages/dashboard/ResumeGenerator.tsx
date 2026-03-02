@@ -15,7 +15,9 @@ import {
   Award,
   RefreshCw,
   Globe,
-  Share2
+  Share2,
+  Camera,
+  Upload
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import AISuggestionPanel from "@/components/resume/AISuggestionPanel";
@@ -64,6 +66,8 @@ const ResumeGenerator = () => {
   const [templates, setTemplates] = useState<ResumeTemplate[]>([]);
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [resumeData, setResumeData] = useState<any>(null);
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [dataStatus, setDataStatus] = useState({
     profile: false,
     skills: 0,
@@ -91,11 +95,14 @@ const ResumeGenerator = () => {
     ]);
 
     if (templatesRes.data) setTemplates(templatesRes.data);
-    if (profileRes.data) setProfileData(profileRes.data);
+    if (profileRes.data) {
+      setProfileData(profileRes.data);
+      setProfilePhotoUrl((profileRes.data as any).profile_photo_url || null);
+    }
 
     // Prepare resume data for AI suggestions
     setResumeData({
-      profile: profileRes.data || {},
+      profile: { ...(profileRes.data || {}), profile_photo_url: (profileRes.data as any)?.profile_photo_url },
       skills: skillsRes.data || [],
       education: educationRes.data || [],
       projects: projectsRes.data || [],
@@ -112,6 +119,54 @@ const ResumeGenerator = () => {
     });
 
     setLoading(false);
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const validTypes = ["image/jpeg", "image/jpg", "image/png"];
+    if (!validTypes.includes(file.type)) {
+      toast({ title: "Invalid file type", description: "Only JPG, JPEG, and PNG files are allowed.", variant: "destructive" });
+      return;
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Maximum file size is 4MB.", variant: "destructive" });
+      return;
+    }
+
+    setUploadingPhoto(true);
+    try {
+      const filePath = `${user.id}/profile.jpg`;
+      const { error: uploadError } = await supabase.storage
+        .from("resume-photos")
+        .upload(filePath, file, { upsert: true });
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("resume-photos")
+        .getPublicUrl(filePath);
+
+      const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ profile_photo_url: publicUrl } as any)
+        .eq("user_id", user.id);
+      if (updateError) throw updateError;
+
+      setProfilePhotoUrl(publicUrl);
+      setResumeData((prev: any) => ({
+        ...prev,
+        profile: { ...prev.profile, profile_photo_url: publicUrl }
+      }));
+
+      toast({ title: "Photo uploaded!", description: "Your profile photo has been updated." });
+    } catch (error: any) {
+      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+    } finally {
+      setUploadingPhoto(false);
+    }
   };
 
   const generateResume = async () => {
@@ -239,6 +294,57 @@ const ResumeGenerator = () => {
             <PublicPortfolioSettings userId={user.id} />
           </DialogContent>
         </Dialog>
+      </div>
+
+      {/* Profile Photo Upload */}
+      <div className="glass-card rounded-2xl p-6 sm:p-8 mb-8">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+            <Camera className="w-5 h-5 text-accent" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold text-foreground">Profile Photo</h2>
+            <p className="text-sm text-muted-foreground">Upload a photo for your resume (JPG/PNG, max 4MB)</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-6">
+          <div className="relative">
+            {profilePhotoUrl ? (
+              <img
+                src={profilePhotoUrl}
+                alt="Profile"
+                className="w-[120px] h-[120px] rounded-full object-cover border-2 border-border"
+              />
+            ) : (
+              <div className="w-[120px] h-[120px] rounded-full bg-muted flex items-center justify-center border-2 border-border">
+                <User className="w-12 h-12 text-muted-foreground" />
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="photo-upload">
+              <Button variant="outline" asChild disabled={uploadingPhoto}>
+                <span>
+                  {uploadingPhoto ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : (
+                    <Upload className="w-4 h-4 mr-2" />
+                  )}
+                  {uploadingPhoto ? "Uploading..." : profilePhotoUrl ? "Change Photo" : "Upload Photo"}
+                </span>
+              </Button>
+            </label>
+            <input
+              id="photo-upload"
+              type="file"
+              accept=".jpg,.jpeg,.png"
+              onChange={handlePhotoUpload}
+              className="hidden"
+              disabled={uploadingPhoto}
+            />
+            <p className="text-xs text-muted-foreground">Recommended: Square image, at least 200×200px</p>
+          </div>
+        </div>
       </div>
 
       {/* Readiness Score */}

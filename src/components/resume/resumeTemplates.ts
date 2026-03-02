@@ -12,6 +12,7 @@ interface ResumeData {
     github_url?: string;
     portfolio_url?: string;
     avatar_url?: string;
+    profile_photo_url?: string;
   };
   skills: Array<{ name: string; proficiency_level?: string; category?: string }>;
   education: Array<{
@@ -44,10 +45,16 @@ const icons = {
   portfolio: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>`,
 };
 
-const avatarCircle = (name: string, bgColor: string, textColor: string) => `
-  <div style="width:110px;height:110px;border-radius:50%;background:${bgColor};display:flex;align-items:center;justify-content:center;margin:0 auto 18px;">
+const avatarCircle = (name: string, bgColor: string, textColor: string, photoUrl?: string) => {
+  if (photoUrl) {
+    return `<div style="width:110px;height:110px;border-radius:50%;overflow:hidden;margin:0 auto 18px;border:3px solid rgba(255,255,255,0.15);">
+      <img src="${photoUrl}" alt="Profile" style="width:100%;height:100%;object-fit:cover;" />
+    </div>`;
+  }
+  return `<div style="width:110px;height:110px;border-radius:50%;background:${bgColor};display:flex;align-items:center;justify-content:center;margin:0 auto 18px;">
     <span style="font-size:36pt;font-weight:600;color:${textColor};line-height:1;">${(name || "?")[0].toUpperCase()}</span>
   </div>`;
+};
 
 // ─── TEMPLATE 1: Professional ────────────────────────────────────────
 // Traditional corporate style. Dark sidebar, serif accents, muted blue.
@@ -95,7 +102,9 @@ body { font-family: 'Source Sans 3', sans-serif; font-size: 10pt; line-height: 1
 </style></head><body><div class="page">
 
 <div class="left">
-  <div class="avatar"><span>${(p?.full_name || "?")[0].toUpperCase()}</span></div>
+  ${p?.profile_photo_url
+    ? `<div style="width:110px;height:110px;border-radius:50%;overflow:hidden;margin:0 auto 18px;border:3px solid rgba(255,255,255,0.15);"><img src="${p.profile_photo_url}" alt="Profile" style="width:100%;height:100%;object-fit:cover;" /></div>`
+    : `<div class="avatar"><span>${(p?.full_name || "?")[0].toUpperCase()}</span></div>`}
   <div class="name">${p?.full_name || "Your Name"}</div>
   <div class="subtitle">Professional Resume</div>
 
@@ -176,7 +185,9 @@ body { font-family: 'Inter', sans-serif; font-size: 9.5pt; line-height: 1.5; col
 </style></head><body><div class="page">
 
 <div class="left">
-  <div class="avatar"><span>${(p?.full_name || "?")[0].toUpperCase()}</span></div>
+  ${p?.profile_photo_url
+    ? `<div style="width:100px;height:100px;border-radius:50%;overflow:hidden;margin:0 auto 16px;"><img src="${p.profile_photo_url}" alt="Profile" style="width:100%;height:100%;object-fit:cover;" /></div>`
+    : `<div class="avatar"><span>${(p?.full_name || "?")[0].toUpperCase()}</span></div>`}
   <div class="name">${p?.full_name || "Your Name"}</div>
   <div class="subtitle">Resume</div>
 
@@ -256,7 +267,9 @@ body { font-family: 'IBM Plex Sans', sans-serif; font-size: 9.5pt; line-height: 
 </style></head><body><div class="page">
 
 <div class="left">
-  <div class="avatar"><span>${(p?.full_name || "?")[0].toUpperCase()}</span></div>
+  ${p?.profile_photo_url
+    ? `<div style="width:90px;height:90px;border-radius:50%;overflow:hidden;margin:0 auto 16px;"><img src="${p.profile_photo_url}" alt="Profile" style="width:100%;height:100%;object-fit:cover;" /></div>`
+    : `<div class="avatar"><span>${(p?.full_name || "?")[0].toUpperCase()}</span></div>`}
   <div class="name">${p?.full_name || "Your Name"}</div>
   <div class="subtitle">Resume</div>
 
@@ -347,7 +360,9 @@ body { font-family: 'Space Grotesk', sans-serif; font-size: 9.5pt; line-height: 
 </style></head><body><div class="page">
 
 <div class="left">
-  <div class="avatar"><span>${(p?.full_name || "?")[0].toUpperCase()}</span></div>
+  ${p?.profile_photo_url
+    ? `<div style="width:100px;height:100px;border-radius:50%;overflow:hidden;margin:0 auto 16px;border:2px solid #3d3d6b;"><img src="${p.profile_photo_url}" alt="Profile" style="width:100%;height:100%;object-fit:cover;" /></div>`
+    : `<div class="avatar"><span>${(p?.full_name || "?")[0].toUpperCase()}</span></div>`}
   <div class="name">${p?.full_name || "Your Name"}</div>
   <div class="subtitle">Creative Resume</div>
 
