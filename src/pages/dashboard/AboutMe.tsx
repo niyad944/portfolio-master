@@ -33,6 +33,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { capitalizeProper } from "@/lib/capitalizeProper";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface DashboardContext {
@@ -141,9 +142,15 @@ const AboutMe = () => {
 
   const saveProfile = async () => {
     setSaving(true);
+    const formattedProfile = {
+      ...profile,
+      full_name: capitalizeProper(profile.full_name),
+      location: capitalizeProper(profile.location),
+    };
+    setProfile(formattedProfile);
     const { error } = await supabase
       .from("profiles")
-      .update(profile)
+      .update(formattedProfile)
       .eq("user_id", user.id);
 
     if (error) {
@@ -156,9 +163,14 @@ const AboutMe = () => {
 
   const addSkill = async () => {
     if (!newSkill.name.trim()) return;
+    const formattedSkill = {
+      ...newSkill,
+      name: capitalizeProper(newSkill.name),
+      category: capitalizeProper(newSkill.category),
+    };
     const { data, error } = await supabase
       .from("skills")
-      .insert({ ...newSkill, user_id: user.id })
+      .insert({ ...formattedSkill, user_id: user.id })
       .select()
       .single();
 
@@ -181,9 +193,15 @@ const AboutMe = () => {
 
   const addEducation = async () => {
     if (!newEducation.institution.trim() || !newEducation.degree.trim()) return;
+    const formattedEducation = {
+      ...newEducation,
+      institution: capitalizeProper(newEducation.institution),
+      degree: capitalizeProper(newEducation.degree),
+      field_of_study: capitalizeProper(newEducation.field_of_study),
+    };
     const { data, error } = await supabase
       .from("education")
-      .insert({ ...newEducation, user_id: user.id })
+      .insert({ ...formattedEducation, user_id: user.id })
       .select()
       .single();
 
@@ -229,14 +247,14 @@ const AboutMe = () => {
     }
 
     const insertData = {
-      event_name: newAchievement.event_name,
-      venue: newAchievement.venue,
+      event_name: capitalizeProper(newAchievement.event_name),
+      venue: capitalizeProper(newAchievement.venue),
       date_achieved: newAchievement.date_achieved,
       achievement_level: newAchievement.achievement_level,
       achievement_type: newAchievement.achievement_type,
       position: newAchievement.achievement_type === "winning" ? newAchievement.position || null : null,
       certificate_url: certificateUrl,
-      title: newAchievement.event_name,
+      title: capitalizeProper(newAchievement.event_name),
       user_id: user.id,
     };
 
