@@ -475,13 +475,13 @@ ${result.suggestions.map((s, i) => `  ${i + 1}. ${s}`).join("\n")}
 // Sub-components
 const ScoreCard = ({ title, score, icon }: { title: string; score: number; icon: React.ReactNode }) => (
   <Card className={`border ${getScoreBg(score)}`}>
-    <CardContent className="p-6">
-      <div className="flex items-center justify-between mb-4">
+    <CardContent className="p-4 sm:p-6">
+      <div className="flex items-center justify-between mb-3 sm:mb-4">
         <div className="flex items-center gap-2 text-foreground">
           {icon}
-          <span className="text-sm font-medium">{title}</span>
+          <span className="text-xs sm:text-sm font-medium">{title}</span>
         </div>
-        <span className={`text-3xl font-display font-bold ${getScoreColor(score)}`}>{score}%</span>
+        <span className={`text-2xl sm:text-3xl font-display font-bold ${getScoreColor(score)}`}>{score}%</span>
       </div>
       <Progress value={score} className="h-2" />
     </CardContent>
