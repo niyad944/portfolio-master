@@ -128,7 +128,7 @@ const Projects = () => {
       .filter(t => t.length > 0);
 
     const projectData = {
-      title: formData.title,
+      title: capitalizeProper(formData.title),
       description: formData.description || null,
       technologies: technologies.length > 0 ? technologies : null,
       start_date: formData.start_date || null,
