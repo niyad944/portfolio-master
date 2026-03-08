@@ -13,6 +13,7 @@ import Certificates from "./pages/dashboard/Certificates";
 import Projects from "./pages/dashboard/Projects";
 import ResumeGenerator from "./pages/dashboard/ResumeGenerator";
 import ResumeAnalyzer from "./pages/dashboard/ResumeAnalyzer";
+import SkillInsights from "./pages/dashboard/SkillInsights";
 import ActivityLog from "./pages/dashboard/ActivityLog";
 import PublicPortfolio from "./pages/PublicPortfolio";
 import NotFound from "./pages/NotFound";
