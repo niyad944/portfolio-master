@@ -412,6 +412,7 @@ const AboutMe = () => {
     setSavingAi(false);
   };
 
+  const getLevelBadgeColor = (level: string) => {
     const colors: Record<string, string> = {
       college: "bg-secondary text-secondary-foreground",
       zonal: "bg-accent/15 text-accent",
