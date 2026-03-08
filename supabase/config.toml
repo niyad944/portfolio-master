@@ -3,6 +3,9 @@ project_id = "flbzaqqzagqgbwoevpbn"
 [functions.ai-resume-helper]
 verify_jwt = false
 
+[functions.analyze-achievement]
+verify_jwt = false
+
 [functions.analyze-certificate]
 verify_jwt = false
 
