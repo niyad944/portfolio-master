@@ -476,7 +476,7 @@ const Certificates = () => {
               <p className="text-sm text-muted-foreground">
                 Review and edit the extracted data, then apply it to your resume.
               </p>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label className="text-xs">Exam Type</Label>
                   <Input

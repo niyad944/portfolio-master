@@ -437,22 +437,26 @@ ${result.suggestions.map((s, i) => `  ${i + 1}. ${s}`).join("\n")}
                       animate={{ opacity: 1 }}
                       className="flex items-center justify-between p-4 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:border-accent/20 transition-colors"
                     >
-                      <div className="flex items-center gap-4 min-w-0">
-                        <div className="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center shrink-0">
-                          <FileText className="w-5 h-5 text-accent" />
+                      <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-accent/15 flex items-center justify-center shrink-0">
+                          <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
                         </div>
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium text-foreground truncate">{record.job_role}</p>
-                          <p className="text-xs text-muted-foreground">{new Date(record.created_at).toLocaleDateString()} · {record.resume_file_name}</p>
+                          <p className="text-xs text-muted-foreground truncate">{new Date(record.created_at).toLocaleDateString()} · {record.resume_file_name}</p>
+                          <div className="flex items-center gap-3 sm:hidden mt-1">
+                            <span className={`text-xs font-bold ${getScoreColor(record.ats_score || 0)}`}>ATS: {record.ats_score}%</span>
+                            <span className={`text-xs ${getScoreColor(record.job_match_score || 0)}`}>Match: {record.job_match_score}%</span>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3 shrink-0">
+                      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                         <div className="text-right hidden sm:block">
                           <p className={`text-sm font-bold ${getScoreColor(record.ats_score || 0)}`}>ATS: {record.ats_score}%</p>
                           <p className={`text-xs ${getScoreColor(record.job_match_score || 0)}`}>Match: {record.job_match_score}%</p>
                         </div>
-                        <Button variant="ghost" size="sm" onClick={() => handleViewRecord(record)}>View</Button>
-                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => handleDeleteRecord(record.id)}>
+                        <Button variant="ghost" size="sm" onClick={() => handleViewRecord(record)} className="h-8 px-2 sm:px-3 text-xs sm:text-sm">View</Button>
+                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive h-8 w-8" onClick={() => handleDeleteRecord(record.id)}>
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
@@ -471,13 +475,13 @@ ${result.suggestions.map((s, i) => `  ${i + 1}. ${s}`).join("\n")}
 // Sub-components
 const ScoreCard = ({ title, score, icon }: { title: string; score: number; icon: React.ReactNode }) => (
   <Card className={`border ${getScoreBg(score)}`}>
-    <CardContent className="p-6">
-      <div className="flex items-center justify-between mb-4">
+    <CardContent className="p-4 sm:p-6">
+      <div className="flex items-center justify-between mb-3 sm:mb-4">
         <div className="flex items-center gap-2 text-foreground">
           {icon}
-          <span className="text-sm font-medium">{title}</span>
+          <span className="text-xs sm:text-sm font-medium">{title}</span>
         </div>
-        <span className={`text-3xl font-display font-bold ${getScoreColor(score)}`}>{score}%</span>
+        <span className={`text-2xl sm:text-3xl font-display font-bold ${getScoreColor(score)}`}>{score}%</span>
       </div>
       <Progress value={score} className="h-2" />
     </CardContent>

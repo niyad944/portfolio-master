@@ -307,21 +307,21 @@ const ResumeGenerator = () => {
             <p className="text-sm text-muted-foreground">Upload a photo for your resume (JPG/PNG, max 4MB)</p>
           </div>
         </div>
-        <div className="flex items-center gap-6">
-          <div className="relative">
+        <div className="flex flex-col sm:flex-row items-center gap-5 sm:gap-6">
+          <div className="relative shrink-0">
             {profilePhotoUrl ? (
               <img
                 src={profilePhotoUrl}
                 alt="Profile"
-                className="w-[120px] h-[120px] rounded-full object-cover border-2 border-border"
+                className="w-24 h-24 sm:w-[120px] sm:h-[120px] rounded-full object-cover border-2 border-border"
               />
             ) : (
-              <div className="w-[120px] h-[120px] rounded-full bg-muted flex items-center justify-center border-2 border-border">
-                <User className="w-12 h-12 text-muted-foreground" />
+              <div className="w-24 h-24 sm:w-[120px] sm:h-[120px] rounded-full bg-muted flex items-center justify-center border-2 border-border">
+                <User className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground" />
               </div>
             )}
           </div>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col items-center sm:items-start gap-2">
             <label htmlFor="photo-upload">
               <Button variant="outline" asChild disabled={uploadingPhoto}>
                 <span>
@@ -342,7 +342,7 @@ const ResumeGenerator = () => {
               className="hidden"
               disabled={uploadingPhoto}
             />
-            <p className="text-xs text-muted-foreground">Recommended: Square image, at least 200×200px</p>
+            <p className="text-xs text-muted-foreground text-center sm:text-left">Recommended: Square image, at least 200×200px</p>
           </div>
         </div>
       </div>
