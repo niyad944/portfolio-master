@@ -15,7 +15,8 @@ import {
   Menu,
   X,
   ChevronRight,
-  LayoutDashboard
+  LayoutDashboard,
+  Brain
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import SecurityAlert from "@/components/security/SecurityAlert";
