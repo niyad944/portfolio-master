@@ -193,9 +193,15 @@ const AboutMe = () => {
 
   const addEducation = async () => {
     if (!newEducation.institution.trim() || !newEducation.degree.trim()) return;
+    const formattedEducation = {
+      ...newEducation,
+      institution: capitalizeProper(newEducation.institution),
+      degree: capitalizeProper(newEducation.degree),
+      field_of_study: capitalizeProper(newEducation.field_of_study),
+    };
     const { data, error } = await supabase
       .from("education")
-      .insert({ ...newEducation, user_id: user.id })
+      .insert({ ...formattedEducation, user_id: user.id })
       .select()
       .single();
 
