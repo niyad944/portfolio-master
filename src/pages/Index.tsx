@@ -15,6 +15,7 @@ import FloatingOrbs from "@/components/effects/FloatingOrbs";
 import ScrollReveal3D from "@/components/effects/ScrollReveal3D";
 import Tilt3DCard from "@/components/effects/Tilt3DCard";
 import { useParallaxScroll } from "@/hooks/useParallaxScroll";
+import ShaderAnimation from "@/components/ui/shader-animation";
 
 const Index = () => {
   const heroParallax = useParallaxScroll({ speed: 0.12 });
