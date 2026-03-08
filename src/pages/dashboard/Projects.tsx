@@ -27,6 +27,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
+import { capitalizeProper } from "@/lib/capitalizeProper";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface DashboardContext {
