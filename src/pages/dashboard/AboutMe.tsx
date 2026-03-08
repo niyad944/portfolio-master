@@ -163,9 +163,14 @@ const AboutMe = () => {
 
   const addSkill = async () => {
     if (!newSkill.name.trim()) return;
+    const formattedSkill = {
+      ...newSkill,
+      name: capitalizeProper(newSkill.name),
+      category: capitalizeProper(newSkill.category),
+    };
     const { data, error } = await supabase
       .from("skills")
-      .insert({ ...newSkill, user_id: user.id })
+      .insert({ ...formattedSkill, user_id: user.id })
       .select()
       .single();
 
