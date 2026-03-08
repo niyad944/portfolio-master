@@ -318,7 +318,99 @@ const AboutMe = () => {
     }
   };
 
-  const getLevelBadgeColor = (level: string) => {
+  const analyzeWithAI = async () => {
+    if (!aiFile) return;
+    setAnalyzing(true);
+    try {
+      const arrayBuffer = await aiFile.arrayBuffer();
+      const base64Data = btoa(
+        new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), "")
+      );
+
+      const ext = aiFile.name.split(".").pop()?.toLowerCase();
+      let mimeType = "application/pdf";
+      if (ext === "jpg" || ext === "jpeg") mimeType = "image/jpeg";
+      else if (ext === "png") mimeType = "image/png";
+
+      const { data, error } = await supabase.functions.invoke("analyze-achievement", {
+        body: { fileBase64: base64Data, mimeType },
+      });
+
+      if (error) throw error;
+
+      const extracted = data?.extracted as AIExtracted | null;
+      if (!extracted) {
+        toast({ title: "Analysis Failed", description: "Could not extract data from the certificate.", variant: "destructive" });
+        setAnalyzing(false);
+        return;
+      }
+
+      setAiExtracted(extracted);
+      const validLevels = ["college", "zonal", "state", "national", "international"];
+      const validTypes = ["participation", "winning"];
+      setAiFormData({
+        event_name: extracted.event_name || "",
+        venue: extracted.venue || "",
+        date_achieved: extracted.date_achieved || "",
+        achievement_level: validLevels.includes(extracted.achievement_level || "") ? extracted.achievement_level! : "college",
+        achievement_type: validTypes.includes(extracted.achievement_type || "") ? extracted.achievement_type! : "participation",
+        position: extracted.position || "",
+        description: extracted.summary || "",
+      });
+      toast({ title: "Analysis Complete", description: "Review the extracted details and save." });
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message || "AI analysis failed", variant: "destructive" });
+    }
+    setAnalyzing(false);
+  };
+
+  const saveAiAchievement = async () => {
+    if (!aiFormData.event_name.trim() || !aiFormData.venue.trim()) return;
+    setSavingAi(true);
+
+    let certificateUrl: string | null = null;
+    if (aiFile) {
+      const fileExt = aiFile.name.split(".").pop();
+      const filePath = `${user.id}/achievements/${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage.from("certificates").upload(filePath, aiFile);
+      if (uploadError) {
+        toast({ title: "Upload Error", description: uploadError.message, variant: "destructive" });
+        setSavingAi(false);
+        return;
+      }
+      const { data: urlData } = supabase.storage.from("certificates").getPublicUrl(filePath);
+      certificateUrl = urlData.publicUrl;
+    }
+
+    const insertData = {
+      event_name: capitalizeProper(aiFormData.event_name),
+      venue: capitalizeProper(aiFormData.venue),
+      date_achieved: aiFormData.date_achieved || null,
+      achievement_level: aiFormData.achievement_level,
+      achievement_type: aiFormData.achievement_type,
+      position: aiFormData.achievement_type === "winning" ? aiFormData.position || null : null,
+      certificate_url: certificateUrl,
+      title: capitalizeProper(aiFormData.event_name),
+      description: aiFormData.description || null,
+      user_id: user.id,
+    };
+
+    const { data, error } = await supabase.from("achievements").insert(insertData).select().single();
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else if (data) {
+      setAchievements([data, ...achievements]);
+      setAiExtracted(null);
+      setAiFile(null);
+      setAiFormData({
+        event_name: "", venue: "", date_achieved: "", achievement_level: "college",
+        achievement_type: "participation", position: "", description: ""
+      });
+      toast({ title: "Achievement Added", description: "AI-analyzed achievement saved successfully." });
+    }
+    setSavingAi(false);
+  };
+
     const colors: Record<string, string> = {
       college: "bg-secondary text-secondary-foreground",
       zonal: "bg-accent/15 text-accent",
