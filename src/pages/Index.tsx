@@ -15,6 +15,7 @@ import FloatingOrbs from "@/components/effects/FloatingOrbs";
 import ScrollReveal3D from "@/components/effects/ScrollReveal3D";
 import Tilt3DCard from "@/components/effects/Tilt3DCard";
 import { useParallaxScroll } from "@/hooks/useParallaxScroll";
+import ShaderAnimation from "@/components/ui/shader-animation";
 
 const Index = () => {
   const heroParallax = useParallaxScroll({ speed: 0.12 });
@@ -85,7 +86,11 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden noise-overlay">
+    <div className="min-h-screen bg-background overflow-x-hidden noise-overlay relative">
+      {/* Shader animation background */}
+      <div className="fixed inset-0 -z-10 pointer-events-none overflow-hidden opacity-30">
+        <ShaderAnimation />
+      </div>
       {/* Navigation */}
       <motion.nav 
         initial={{ opacity: 0, y: -20 }}
