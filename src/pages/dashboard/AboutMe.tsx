@@ -25,12 +25,15 @@ import {
   Pencil,
   CalendarIcon,
   Trophy,
-  Medal
+  Medal,
+  Sparkles,
+  FileText
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { capitalizeProper } from "@/lib/capitalizeProper";
@@ -77,6 +80,17 @@ interface Achievement {
   position: string | null;
   certificate_url: string | null;
   title: string;
+  description: string | null;
+}
+
+interface AIExtracted {
+  event_name: string | null;
+  venue: string | null;
+  date_achieved: string | null;
+  achievement_level: string | null;
+  achievement_type: string | null;
+  position: string | null;
+  summary: string | null;
 }
 
 const AboutMe = () => {
@@ -105,10 +119,20 @@ const AboutMe = () => {
   });
   const [newAchievement, setNewAchievement] = useState({
     event_name: "", venue: "", date_achieved: "", achievement_level: "college",
-    achievement_type: "participation", position: "", title: ""
+    achievement_type: "participation", position: "", title: "", description: ""
   });
   const [achievementFile, setAchievementFile] = useState<File | null>(null);
   const [uploadingAchievement, setUploadingAchievement] = useState(false);
+
+  // AI upload mode state
+  const [aiFile, setAiFile] = useState<File | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [aiExtracted, setAiExtracted] = useState<AIExtracted | null>(null);
+  const [aiFormData, setAiFormData] = useState({
+    event_name: "", venue: "", date_achieved: "", achievement_level: "college",
+    achievement_type: "participation", position: "", description: ""
+  });
+  const [savingAi, setSavingAi] = useState(false);
 
   useEffect(() => {
     fetchData();
