@@ -23,6 +23,7 @@ import SecurityAlert from "@/components/security/SecurityAlert";
 import { checkSuspiciousActivity, logActivity } from "@/hooks/useActivityLogger";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import FloatingOrbs from "@/components/effects/FloatingOrbs";
+import ShaderAnimation from "@/components/ui/shader-animation";
 
 const Dashboard = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
