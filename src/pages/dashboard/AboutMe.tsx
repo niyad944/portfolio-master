@@ -142,9 +142,15 @@ const AboutMe = () => {
 
   const saveProfile = async () => {
     setSaving(true);
+    const formattedProfile = {
+      ...profile,
+      full_name: capitalizeProper(profile.full_name),
+      location: capitalizeProper(profile.location),
+    };
+    setProfile(formattedProfile);
     const { error } = await supabase
       .from("profiles")
-      .update(profile)
+      .update(formattedProfile)
       .eq("user_id", user.id);
 
     if (error) {
