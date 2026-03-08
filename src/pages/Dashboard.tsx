@@ -114,6 +114,11 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen flex w-full bg-background overflow-x-hidden noise-overlay">
+      {/* Shader animation background */}
+      <div className="fixed inset-0 -z-10 pointer-events-none overflow-hidden opacity-40">
+        <ShaderAnimation />
+      </div>
+
       {/* Ambient background effects with floating orbs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <FloatingOrbs variant="subtle" />
