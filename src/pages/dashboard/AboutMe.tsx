@@ -25,12 +25,15 @@ import {
   Pencil,
   CalendarIcon,
   Trophy,
-  Medal
+  Medal,
+  Sparkles,
+  FileText
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { capitalizeProper } from "@/lib/capitalizeProper";
@@ -77,6 +80,17 @@ interface Achievement {
   position: string | null;
   certificate_url: string | null;
   title: string;
+  description: string | null;
+}
+
+interface AIExtracted {
+  event_name: string | null;
+  venue: string | null;
+  date_achieved: string | null;
+  achievement_level: string | null;
+  achievement_type: string | null;
+  position: string | null;
+  summary: string | null;
 }
 
 const AboutMe = () => {
@@ -105,10 +119,20 @@ const AboutMe = () => {
   });
   const [newAchievement, setNewAchievement] = useState({
     event_name: "", venue: "", date_achieved: "", achievement_level: "college",
-    achievement_type: "participation", position: "", title: ""
+    achievement_type: "participation", position: "", title: "", description: ""
   });
   const [achievementFile, setAchievementFile] = useState<File | null>(null);
   const [uploadingAchievement, setUploadingAchievement] = useState(false);
+
+  // AI upload mode state
+  const [aiFile, setAiFile] = useState<File | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [aiExtracted, setAiExtracted] = useState<AIExtracted | null>(null);
+  const [aiFormData, setAiFormData] = useState({
+    event_name: "", venue: "", date_achieved: "", achievement_level: "college",
+    achievement_type: "participation", position: "", description: ""
+  });
+  const [savingAi, setSavingAi] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -255,6 +279,7 @@ const AboutMe = () => {
       position: newAchievement.achievement_type === "winning" ? newAchievement.position || null : null,
       certificate_url: certificateUrl,
       title: capitalizeProper(newAchievement.event_name),
+      description: newAchievement.description || null,
       user_id: user.id,
     };
 
@@ -270,7 +295,7 @@ const AboutMe = () => {
       setAchievements([data, ...achievements]);
       setNewAchievement({
         event_name: "", venue: "", date_achieved: "", achievement_level: "college",
-        achievement_type: "participation", position: "", title: ""
+        achievement_type: "participation", position: "", title: "", description: ""
       });
       setAchievementFile(null);
       toast({ title: "Achievement Added" });
@@ -292,6 +317,99 @@ const AboutMe = () => {
       setAchievements(achievements.filter(a => a.id !== id));
       toast({ title: "Achievement Removed" });
     }
+  };
+
+  const analyzeWithAI = async () => {
+    if (!aiFile) return;
+    setAnalyzing(true);
+    try {
+      const arrayBuffer = await aiFile.arrayBuffer();
+      const base64Data = btoa(
+        new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), "")
+      );
+
+      const ext = aiFile.name.split(".").pop()?.toLowerCase();
+      let mimeType = "application/pdf";
+      if (ext === "jpg" || ext === "jpeg") mimeType = "image/jpeg";
+      else if (ext === "png") mimeType = "image/png";
+
+      const { data, error } = await supabase.functions.invoke("analyze-achievement", {
+        body: { fileBase64: base64Data, mimeType },
+      });
+
+      if (error) throw error;
+
+      const extracted = data?.extracted as AIExtracted | null;
+      if (!extracted) {
+        toast({ title: "Analysis Failed", description: "Could not extract data from the certificate.", variant: "destructive" });
+        setAnalyzing(false);
+        return;
+      }
+
+      setAiExtracted(extracted);
+      const validLevels = ["college", "zonal", "state", "national", "international"];
+      const validTypes = ["participation", "winning"];
+      setAiFormData({
+        event_name: extracted.event_name || "",
+        venue: extracted.venue || "",
+        date_achieved: extracted.date_achieved || "",
+        achievement_level: validLevels.includes(extracted.achievement_level || "") ? extracted.achievement_level! : "college",
+        achievement_type: validTypes.includes(extracted.achievement_type || "") ? extracted.achievement_type! : "participation",
+        position: extracted.position || "",
+        description: extracted.summary || "",
+      });
+      toast({ title: "Analysis Complete", description: "Review the extracted details and save." });
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message || "AI analysis failed", variant: "destructive" });
+    }
+    setAnalyzing(false);
+  };
+
+  const saveAiAchievement = async () => {
+    if (!aiFormData.event_name.trim() || !aiFormData.venue.trim()) return;
+    setSavingAi(true);
+
+    let certificateUrl: string | null = null;
+    if (aiFile) {
+      const fileExt = aiFile.name.split(".").pop();
+      const filePath = `${user.id}/achievements/${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage.from("certificates").upload(filePath, aiFile);
+      if (uploadError) {
+        toast({ title: "Upload Error", description: uploadError.message, variant: "destructive" });
+        setSavingAi(false);
+        return;
+      }
+      const { data: urlData } = supabase.storage.from("certificates").getPublicUrl(filePath);
+      certificateUrl = urlData.publicUrl;
+    }
+
+    const insertData = {
+      event_name: capitalizeProper(aiFormData.event_name),
+      venue: capitalizeProper(aiFormData.venue),
+      date_achieved: aiFormData.date_achieved || null,
+      achievement_level: aiFormData.achievement_level,
+      achievement_type: aiFormData.achievement_type,
+      position: aiFormData.achievement_type === "winning" ? aiFormData.position || null : null,
+      certificate_url: certificateUrl,
+      title: capitalizeProper(aiFormData.event_name),
+      description: aiFormData.description || null,
+      user_id: user.id,
+    };
+
+    const { data, error } = await supabase.from("achievements").insert(insertData).select().single();
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else if (data) {
+      setAchievements([data, ...achievements]);
+      setAiExtracted(null);
+      setAiFile(null);
+      setAiFormData({
+        event_name: "", venue: "", date_achieved: "", achievement_level: "college",
+        achievement_type: "participation", position: "", description: ""
+      });
+      toast({ title: "Achievement Added", description: "AI-analyzed achievement saved successfully." });
+    }
+    setSavingAi(false);
   };
 
   const getLevelBadgeColor = (level: string) => {
@@ -570,20 +688,24 @@ const AboutMe = () => {
           {achievements.map((ach) => (
             <div key={ach.id} className="p-5 border border-border rounded-xl bg-card/30 hover:border-accent/20 transition-all duration-300">
               <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 min-w-0">
                   {ach.achievement_type === "winning" ? (
-                    <Medal className="w-5 h-5 text-accent" />
+                    <Medal className="w-5 h-5 text-accent shrink-0" />
                   ) : (
-                    <Award className="w-5 h-5 text-muted-foreground" />
+                    <Award className="w-5 h-5 text-muted-foreground shrink-0" />
                   )}
-                  <h3 className="font-semibold text-foreground text-sm">{ach.event_name || ach.title}</h3>
+                  <h3 className="font-semibold text-foreground text-sm truncate">{ach.event_name || ach.title}</h3>
                 </div>
-                <button onClick={() => removeAchievement(ach.id)} className="text-muted-foreground hover:text-destructive transition-colors">
+                <button onClick={() => removeAchievement(ach.id)} className="text-muted-foreground hover:text-destructive transition-colors shrink-0 ml-2">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
 
               <p className="text-sm text-muted-foreground mb-2">{ach.venue}</p>
+
+              {ach.description && (
+                <p className="text-xs text-muted-foreground/80 mb-3 line-clamp-2 italic">{ach.description}</p>
+              )}
 
               <div className="flex flex-wrap items-center gap-2 mb-3">
                 {ach.achievement_level && (
@@ -632,154 +754,384 @@ const AboutMe = () => {
           <p className="text-muted-foreground text-sm mb-6">No achievements added yet. Add your first achievement below.</p>
         )}
 
-        {/* Add Achievement Form */}
-        <div className="p-4 sm:p-5 border border-dashed border-border rounded-xl space-y-4">
-          <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
-            <div className="space-y-2">
-              <Label>Event Name <span className="text-destructive">*</span></Label>
-              <Input
-                value={newAchievement.event_name}
-                onChange={(e) => setNewAchievement({ ...newAchievement, event_name: e.target.value })}
-                placeholder="e.g. National Hackathon 2024"
-                className="input-focus"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Venue / Organized By <span className="text-destructive">*</span></Label>
-              <Input
-                value={newAchievement.venue}
-                onChange={(e) => setNewAchievement({ ...newAchievement, venue: e.target.value })}
-                placeholder="e.g. IIT Bombay"
-                className="input-focus"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Date <span className="text-destructive">*</span></Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !newAchievement.date_achieved && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {newAchievement.date_achieved
-                      ? format(new Date(newAchievement.date_achieved), "PPP")
-                      : "Pick a date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={newAchievement.date_achieved ? new Date(newAchievement.date_achieved) : undefined}
-                    onSelect={(date) =>
-                      setNewAchievement({
-                        ...newAchievement,
-                        date_achieved: date ? format(date, "yyyy-MM-dd") : "",
-                      })
-                    }
-                    disabled={(date) => date > new Date()}
-                    initialFocus
-                    className={cn("p-3 pointer-events-auto")}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="space-y-2">
-              <Label>Achievement Level</Label>
-              <Select
-                value={newAchievement.achievement_level}
-                onValueChange={(value) => setNewAchievement({ ...newAchievement, achievement_level: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="college">College</SelectItem>
-                  <SelectItem value="zonal">Zonal</SelectItem>
-                  <SelectItem value="state">State (University)</SelectItem>
-                  <SelectItem value="national">National</SelectItem>
-                  <SelectItem value="international">International</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Achievement Type</Label>
-              <Select
-                value={newAchievement.achievement_type}
-                onValueChange={(value) => setNewAchievement({ ...newAchievement, achievement_type: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="participation">Participation</SelectItem>
-                  <SelectItem value="winning">Winning</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+        {/* Add Achievement - Tabbed Interface */}
+        <Tabs defaultValue="manual" className="border border-dashed border-border rounded-xl p-4 sm:p-5">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="manual" className="gap-2">
+              <Pencil className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Manual Entry</span>
+              <span className="sm:hidden">Manual</span>
+            </TabsTrigger>
+            <TabsTrigger value="ai" className="gap-2">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">AI Certificate Analysis</span>
+              <span className="sm:hidden">AI Upload</span>
+            </TabsTrigger>
+          </TabsList>
 
-            {newAchievement.achievement_type === "winning" && (
+          {/* Manual Entry Tab */}
+          <TabsContent value="manual" className="space-y-4 mt-0">
+            <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
               <div className="space-y-2">
-                <Label>Position</Label>
+                <Label>Event Name <span className="text-destructive">*</span></Label>
                 <Input
-                  value={newAchievement.position}
-                  onChange={(e) => setNewAchievement({ ...newAchievement, position: e.target.value })}
-                  placeholder="e.g. 1st Place, Runner Up"
+                  value={newAchievement.event_name}
+                  onChange={(e) => setNewAchievement({ ...newAchievement, event_name: e.target.value })}
+                  placeholder="e.g. National Hackathon 2024"
                   className="input-focus"
                 />
               </div>
-            )}
-
-            <div className={cn("space-y-2", newAchievement.achievement_type !== "winning" && "sm:col-span-2")}>
-              <Label>Certificate (PDF, JPG, PNG)</Label>
-              <div className="flex items-center gap-3">
-                <label className="flex-1 cursor-pointer">
-                  <div className="flex items-center gap-2 px-4 py-2.5 border border-dashed border-border rounded-lg hover:border-accent/40 transition-colors">
-                    <Upload className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground truncate">
-                      {achievementFile ? achievementFile.name : "Choose file..."}
-                    </span>
-                  </div>
-                  <input
-                    type="file"
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file && file.size > 10 * 1024 * 1024) {
-                        toast({ title: "File too large", description: "Max 10MB allowed", variant: "destructive" });
-                        return;
+              <div className="space-y-2">
+                <Label>Venue / Organized By <span className="text-destructive">*</span></Label>
+                <Input
+                  value={newAchievement.venue}
+                  onChange={(e) => setNewAchievement({ ...newAchievement, venue: e.target.value })}
+                  placeholder="e.g. IIT Bombay"
+                  className="input-focus"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Date <span className="text-destructive">*</span></Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !newAchievement.date_achieved && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {newAchievement.date_achieved
+                        ? format(new Date(newAchievement.date_achieved), "PPP")
+                        : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={newAchievement.date_achieved ? new Date(newAchievement.date_achieved) : undefined}
+                      onSelect={(date) =>
+                        setNewAchievement({
+                          ...newAchievement,
+                          date_achieved: date ? format(date, "yyyy-MM-dd") : "",
+                        })
                       }
-                      setAchievementFile(file || null);
-                    }}
+                      disabled={(date) => date > new Date()}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="space-y-2">
+                <Label>Achievement Level</Label>
+                <Select
+                  value={newAchievement.achievement_level}
+                  onValueChange={(value) => setNewAchievement({ ...newAchievement, achievement_level: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="college">College</SelectItem>
+                    <SelectItem value="zonal">Zonal</SelectItem>
+                    <SelectItem value="state">State (University)</SelectItem>
+                    <SelectItem value="national">National</SelectItem>
+                    <SelectItem value="international">International</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Achievement Type</Label>
+                <Select
+                  value={newAchievement.achievement_type}
+                  onValueChange={(value) => setNewAchievement({ ...newAchievement, achievement_type: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="participation">Participation</SelectItem>
+                    <SelectItem value="winning">Winning</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {newAchievement.achievement_type === "winning" && (
+                <div className="space-y-2">
+                  <Label>Position</Label>
+                  <Input
+                    value={newAchievement.position}
+                    onChange={(e) => setNewAchievement({ ...newAchievement, position: e.target.value })}
+                    placeholder="e.g. 1st Place, Runner Up"
+                    className="input-focus"
                   />
-                </label>
-                {achievementFile && (
-                  <button onClick={() => setAchievementFile(null)} className="text-muted-foreground hover:text-destructive">
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
+                </div>
+              )}
+
+              <div className="sm:col-span-2 space-y-2">
+                <Label>Description / Notes</Label>
+                <Textarea
+                  value={newAchievement.description}
+                  onChange={(e) => setNewAchievement({ ...newAchievement, description: e.target.value })}
+                  placeholder="Brief description of the achievement..."
+                  className="min-h-[60px] input-focus"
+                />
+              </div>
+
+              <div className="sm:col-span-2 space-y-2">
+                <Label>Certificate (Optional - PDF, JPG, PNG)</Label>
+                <div className="flex items-center gap-3">
+                  <label className="flex-1 cursor-pointer">
+                    <div className="flex items-center gap-2 px-4 py-2.5 border border-dashed border-border rounded-lg hover:border-accent/40 transition-colors">
+                      <Upload className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground truncate">
+                        {achievementFile ? achievementFile.name : "Choose file..."}
+                      </span>
+                    </div>
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file && file.size > 10 * 1024 * 1024) {
+                          toast({ title: "File too large", description: "Max 10MB allowed", variant: "destructive" });
+                          return;
+                        }
+                        setAchievementFile(file || null);
+                      }}
+                    />
+                  </label>
+                  {achievementFile && (
+                    <button onClick={() => setAchievementFile(null)} className="text-muted-foreground hover:text-destructive">
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
 
-          <Button
-            onClick={addAchievement}
-            variant="outline"
-            className="w-full"
-            disabled={uploadingAchievement || !newAchievement.event_name.trim() || !newAchievement.venue.trim() || !newAchievement.date_achieved}
-          >
-            {uploadingAchievement ? (
-              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+            <Button
+              onClick={addAchievement}
+              variant="outline"
+              className="w-full"
+              disabled={uploadingAchievement || !newAchievement.event_name.trim() || !newAchievement.venue.trim() || !newAchievement.date_achieved}
+            >
+              {uploadingAchievement ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <Plus className="w-4 h-4 mr-2" />
+              )}
+              {uploadingAchievement ? "Uploading..." : "Add Achievement"}
+            </Button>
+          </TabsContent>
+
+          {/* AI Upload Tab */}
+          <TabsContent value="ai" className="space-y-4 mt-0">
+            {!aiExtracted ? (
+              <>
+                <div className="text-center p-6 sm:p-8 border border-dashed border-border rounded-xl bg-card/20">
+                  <Sparkles className="w-8 h-8 text-accent mx-auto mb-3" />
+                  <h3 className="font-semibold text-foreground mb-1">AI Certificate Analysis</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Upload a certificate and AI will automatically extract achievement details
+                  </p>
+
+                  <label className="inline-block cursor-pointer">
+                    <div className="flex items-center gap-2 px-6 py-3 border border-dashed border-accent/40 rounded-lg hover:border-accent hover:bg-accent/5 transition-all">
+                      <Upload className="w-4 h-4 text-accent" />
+                      <span className="text-sm font-medium text-accent">
+                        {aiFile ? aiFile.name : "Choose certificate file (PDF, JPG, PNG)"}
+                      </span>
+                    </div>
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file && file.size > 10 * 1024 * 1024) {
+                          toast({ title: "File too large", description: "Max 10MB allowed", variant: "destructive" });
+                          return;
+                        }
+                        setAiFile(file || null);
+                      }}
+                    />
+                  </label>
+
+                  {aiFile && (
+                    <div className="mt-3 flex items-center justify-center gap-2">
+                      <FileText className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">{aiFile.name}</span>
+                      <button onClick={() => setAiFile(null)} className="text-muted-foreground hover:text-destructive">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <Button
+                  onClick={analyzeWithAI}
+                  className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
+                  disabled={!aiFile || analyzing}
+                >
+                  {analyzing ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : (
+                    <Sparkles className="w-4 h-4 mr-2" />
+                  )}
+                  {analyzing ? "Analyzing Certificate..." : "Analyze with AI"}
+                </Button>
+              </>
             ) : (
-              <Plus className="w-4 h-4 mr-2" />
+              <>
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-accent/10 border border-accent/20">
+                  <Sparkles className="w-4 h-4 text-accent" />
+                  <span className="text-sm font-medium text-accent">AI extracted the following details — review and edit before saving</span>
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
+                  <div className="space-y-2">
+                    <Label>Event Name <span className="text-destructive">*</span></Label>
+                    <Input
+                      value={aiFormData.event_name}
+                      onChange={(e) => setAiFormData({ ...aiFormData, event_name: e.target.value })}
+                      className="input-focus"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Venue / Organized By <span className="text-destructive">*</span></Label>
+                    <Input
+                      value={aiFormData.venue}
+                      onChange={(e) => setAiFormData({ ...aiFormData, venue: e.target.value })}
+                      className="input-focus"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Date</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !aiFormData.date_achieved && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {aiFormData.date_achieved
+                            ? format(new Date(aiFormData.date_achieved), "PPP")
+                            : "Pick a date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={aiFormData.date_achieved ? new Date(aiFormData.date_achieved) : undefined}
+                          onSelect={(date) =>
+                            setAiFormData({
+                              ...aiFormData,
+                              date_achieved: date ? format(date, "yyyy-MM-dd") : "",
+                            })
+                          }
+                          disabled={(date) => date > new Date()}
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Achievement Level</Label>
+                    <Select
+                      value={aiFormData.achievement_level}
+                      onValueChange={(value) => setAiFormData({ ...aiFormData, achievement_level: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="college">College</SelectItem>
+                        <SelectItem value="zonal">Zonal</SelectItem>
+                        <SelectItem value="state">State (University)</SelectItem>
+                        <SelectItem value="national">National</SelectItem>
+                        <SelectItem value="international">International</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Achievement Type</Label>
+                    <Select
+                      value={aiFormData.achievement_type}
+                      onValueChange={(value) => setAiFormData({ ...aiFormData, achievement_type: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="participation">Participation</SelectItem>
+                        <SelectItem value="winning">Winning</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {aiFormData.achievement_type === "winning" && (
+                    <div className="space-y-2">
+                      <Label>Position</Label>
+                      <Input
+                        value={aiFormData.position}
+                        onChange={(e) => setAiFormData({ ...aiFormData, position: e.target.value })}
+                        placeholder="e.g. 1st Place"
+                        className="input-focus"
+                      />
+                    </div>
+                  )}
+
+                  <div className="sm:col-span-2 space-y-2">
+                    <Label>AI Summary / Description</Label>
+                    <Textarea
+                      value={aiFormData.description}
+                      onChange={(e) => setAiFormData({ ...aiFormData, description: e.target.value })}
+                      placeholder="AI-generated summary..."
+                      className="min-h-[60px] input-focus"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button
+                    onClick={saveAiAchievement}
+                    className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground"
+                    disabled={savingAi || !aiFormData.event_name.trim() || !aiFormData.venue.trim()}
+                  >
+                    {savingAi ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <Save className="w-4 h-4 mr-2" />
+                    )}
+                    {savingAi ? "Saving..." : "Save Achievement"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setAiExtracted(null);
+                      setAiFile(null);
+                      setAiFormData({
+                        event_name: "", venue: "", date_achieved: "", achievement_level: "college",
+                        achievement_type: "participation", position: "", description: ""
+                      });
+                    }}
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Cancel
+                  </Button>
+                </div>
+              </>
             )}
-            {uploadingAchievement ? "Uploading..." : "Add Achievement"}
-          </Button>
-        </div>
+          </TabsContent>
+        </Tabs>
       </section>
     </div>
   );
