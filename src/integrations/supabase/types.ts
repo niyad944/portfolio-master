@@ -349,6 +349,63 @@ export type Database = {
         }
         Relationships: []
       }
+      resume_analyses: {
+        Row: {
+          ats_score: number | null
+          created_at: string
+          detected_skills: Json | null
+          experience_gaps: Json | null
+          id: string
+          job_match_score: number | null
+          job_role: string
+          missing_keywords: Json | null
+          missing_skills: Json | null
+          raw_response: string | null
+          resume_file_name: string | null
+          resume_file_path: string | null
+          strengths: Json | null
+          suggestions: Json | null
+          user_id: string
+          weaknesses: Json | null
+        }
+        Insert: {
+          ats_score?: number | null
+          created_at?: string
+          detected_skills?: Json | null
+          experience_gaps?: Json | null
+          id?: string
+          job_match_score?: number | null
+          job_role: string
+          missing_keywords?: Json | null
+          missing_skills?: Json | null
+          raw_response?: string | null
+          resume_file_name?: string | null
+          resume_file_path?: string | null
+          strengths?: Json | null
+          suggestions?: Json | null
+          user_id: string
+          weaknesses?: Json | null
+        }
+        Update: {
+          ats_score?: number | null
+          created_at?: string
+          detected_skills?: Json | null
+          experience_gaps?: Json | null
+          id?: string
+          job_match_score?: number | null
+          job_role?: string
+          missing_keywords?: Json | null
+          missing_skills?: Json | null
+          raw_response?: string | null
+          resume_file_name?: string | null
+          resume_file_path?: string | null
+          strengths?: Json | null
+          suggestions?: Json | null
+          user_id?: string
+          weaknesses?: Json | null
+        }
+        Relationships: []
+      }
       resume_templates: {
         Row: {
           created_at: string
