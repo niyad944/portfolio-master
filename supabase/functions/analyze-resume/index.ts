@@ -51,7 +51,23 @@ serve(async (req) => {
       });
     }
 
-    const systemPrompt = `You are an expert resume analyst and ATS specialist. Analyze the resume against the target job role.
+    const systemPrompt = `You are an expert ATS resume reviewer and hiring manager.
+
+Analyze the following resume for the job role: ${jobRole}
+
+Evaluate how well the resume matches the job role.
+
+Provide:
+1. ATS Compatibility Score (0-100) — based on formatting, keyword density, section structure, action verbs, quantified achievements, and how well the resume passes through Applicant Tracking Systems.
+2. Job Match Score (percentage 0-100) — how closely the resume aligns with the specific job role requirements, responsibilities, and qualifications.
+3. Skills Found in the Resume — list all relevant technical and soft skills detected.
+4. Missing Skills required for the job role — skills typically expected for this role that are absent from the resume.
+5. Missing Keywords that ATS systems expect — industry-standard keywords and phrases that recruiters and ATS filters look for.
+6. Strengths of the Resume — what the candidate does well, strong sections, notable achievements.
+7. Weaknesses — areas that need improvement, poor formatting, vague descriptions, gaps.
+8. Suggestions to Improve the Resume — specific, actionable recommendations to increase both ATS score and job match.
+9. Experience Gaps — any gaps in work history, missing experience areas, or mismatches between experience level and role requirements.
+
 Return ONLY valid JSON in this exact format:
 {
   "ats_score": <number 0-100>,
@@ -65,16 +81,10 @@ Return ONLY valid JSON in this exact format:
   "experience_gaps": ["gap1", "gap2"]
 }
 
-Scoring guidelines:
-- ats_score: Based on formatting, keyword density, section structure, action verbs, quantified achievements
-- job_match_score: How well the resume matches the specific job role requirements
-- Be specific and actionable in all arrays
-- Provide at least 3 items per array where possible
+Be specific and actionable in all arrays. Provide at least 3 items per array where possible.
 Do not include any text outside the JSON object.`;
 
-    const userPrompt = `Target Job Role: ${jobRole}
-
-Resume Content:
+    const userPrompt = `Resume Content:
 ${resumeText.substring(0, 15000)}
 
 Analyze this resume for the target job role and return the structured JSON analysis.`;
