@@ -279,6 +279,7 @@ const AboutMe = () => {
       position: newAchievement.achievement_type === "winning" ? newAchievement.position || null : null,
       certificate_url: certificateUrl,
       title: capitalizeProper(newAchievement.event_name),
+      description: newAchievement.description || null,
       user_id: user.id,
     };
 
