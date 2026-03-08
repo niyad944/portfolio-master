@@ -15,7 +15,8 @@ import {
   Menu,
   X,
   ChevronRight,
-  LayoutDashboard
+  LayoutDashboard,
+  Brain
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import SecurityAlert from "@/components/security/SecurityAlert";
@@ -93,6 +94,7 @@ const Dashboard = () => {
     { icon: FolderLock, label: "Certificates", path: "/dashboard/certificates" },
     { icon: Briefcase, label: "Projects", path: "/dashboard/projects" },
     { icon: FileText, label: "Resume Generator", path: "/dashboard/resume" },
+    { icon: Brain, label: "Resume Analyzer", path: "/dashboard/analyzer" },
     { icon: Activity, label: "Activity Log", path: "/dashboard/activity" },
   ];
 
