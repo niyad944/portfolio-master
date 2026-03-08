@@ -247,8 +247,8 @@ const AboutMe = () => {
     }
 
     const insertData = {
-      event_name: newAchievement.event_name,
-      venue: newAchievement.venue,
+      event_name: capitalizeProper(newAchievement.event_name),
+      venue: capitalizeProper(newAchievement.venue),
       date_achieved: newAchievement.date_achieved,
       achievement_level: newAchievement.achievement_level,
       achievement_type: newAchievement.achievement_type,
