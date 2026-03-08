@@ -86,7 +86,11 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden noise-overlay">
+    <div className="min-h-screen bg-background overflow-x-hidden noise-overlay relative">
+      {/* Shader animation background */}
+      <div className="fixed inset-0 -z-10 pointer-events-none overflow-hidden opacity-30">
+        <ShaderAnimation />
+      </div>
       {/* Navigation */}
       <motion.nav 
         initial={{ opacity: 0, y: -20 }}
