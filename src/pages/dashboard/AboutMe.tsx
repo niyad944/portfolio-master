@@ -294,7 +294,7 @@ const AboutMe = () => {
       setAchievements([data, ...achievements]);
       setNewAchievement({
         event_name: "", venue: "", date_achieved: "", achievement_level: "college",
-        achievement_type: "participation", position: "", title: ""
+        achievement_type: "participation", position: "", title: "", description: ""
       });
       setAchievementFile(null);
       toast({ title: "Achievement Added" });
