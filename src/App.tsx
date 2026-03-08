@@ -37,6 +37,7 @@ const App = () => (
             <Route path="projects" element={<Projects />} />
             <Route path="resume" element={<ResumeGenerator />} />
             <Route path="analyzer" element={<ResumeAnalyzer />} />
+            <Route path="insights" element={<SkillInsights />} />
             <Route path="activity" element={<ActivityLog />} />
           </Route>
           <Route path="/p/:slug" element={<PublicPortfolio />} />

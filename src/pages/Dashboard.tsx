@@ -97,6 +97,7 @@ const Dashboard = () => {
     { icon: Briefcase, label: "Projects", path: "/dashboard/projects" },
     { icon: FileText, label: "Resume Generator", path: "/dashboard/resume" },
     { icon: Brain, label: "Resume Analyzer", path: "/dashboard/analyzer" },
+    { icon: Radar, label: "Skill Insights", path: "/dashboard/insights" },
     { icon: Activity, label: "Activity Log", path: "/dashboard/activity" },
   ];
 
