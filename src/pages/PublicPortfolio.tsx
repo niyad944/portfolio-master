@@ -377,57 +377,125 @@ const PublicPortfolio = () => {
               <Briefcase className="w-5 h-5 text-accent" />
               Projects
             </h2>
-            <div className="grid gap-5 sm:gap-6 sm:grid-cols-2 perspective-1200">
-              {projects.map((project, index) => (
-                <ScrollReveal3D key={project.id} delay={index * 0.1} direction={index % 2 === 0 ? "left" : "right"}>
-                  <Tilt3DCard maxTilt={5} scale={1.015}>
-                    <div className="glass-card-hover rounded-2xl p-5 sm:p-7 shadow-3d-hover">
-                      <div className="flex items-start gap-3 mb-3">
-                        <h3 className="font-display font-semibold text-foreground flex-1 text-base sm:text-lg">
-                          {project.title}
-                        </h3>
-                        {project.is_featured && <Star className="w-5 h-5 text-accent fill-accent shrink-0" />}
-                      </div>
-                      {project.description && (
-                        <p className="text-xs sm:text-sm text-muted-foreground mb-4 line-clamp-3">
-                          {project.description}
-                        </p>
-                      )}
-                      {project.technologies?.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5">
-                          {project.technologies.map((tech: string, i: number) => (
-                            <Badge key={i} variant="secondary" className="text-xs bg-white/[0.05] border-white/10">
-                              {tech}
-                            </Badge>
-                          ))}
+            <div className="space-y-8 sm:space-y-12">
+              {projects.map((project, index) => {
+                const isEven = index % 2 === 0;
+                const hasImage = !!project.image_url;
+
+                return (
+                  <ScrollReveal3D key={project.id} delay={index * 0.12} direction={isEven ? "left" : "right"}>
+                    <div className={`glass-card-hover rounded-2xl overflow-hidden shadow-3d-hover ${hasImage ? "" : "p-5 sm:p-7"}`}>
+                      {hasImage ? (
+                        <div className={`flex flex-col ${isEven ? "md:flex-row" : "md:flex-row-reverse"}`}>
+                          {/* Image side */}
+                          <div className="w-full md:w-1/2 h-56 sm:h-64 md:h-auto md:min-h-[280px] relative overflow-hidden group">
+                            <img
+                              src={project.image_url}
+                              alt={project.title}
+                              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                              loading="lazy"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent md:hidden" />
+                          </div>
+                          {/* Text side */}
+                          <div className="w-full md:w-1/2 p-5 sm:p-7 flex flex-col justify-center">
+                            {/* SDG Badges */}
+                            {project.sdg_goals?.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 mb-3">
+                                {project.sdg_goals.map((sdg: string, i: number) => (
+                                  <Badge
+                                    key={i}
+                                    className="text-[10px] sm:text-xs font-bold bg-gradient-to-r from-accent/25 to-accent/10 text-accent border-accent/30 px-2.5 py-1"
+                                  >
+                                    {sdg}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                            <div className="flex items-start gap-3 mb-3">
+                              <h3 className="font-display font-semibold text-foreground flex-1 text-lg sm:text-xl">
+                                {project.title}
+                              </h3>
+                              {project.is_featured && <Star className="w-5 h-5 text-accent fill-accent shrink-0" />}
+                            </div>
+                            {project.description && (
+                              <p className="text-xs sm:text-sm text-muted-foreground mb-4 line-clamp-4">
+                                {project.description}
+                              </p>
+                            )}
+                            {project.technologies?.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 mb-4">
+                                {project.technologies.map((tech: string, i: number) => (
+                                  <Badge key={i} variant="secondary" className="text-xs bg-white/[0.05] border-white/10">
+                                    {tech}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                            <div className="flex gap-4 pt-4 border-t border-white/[0.06] mt-auto">
+                              {project.project_url && (
+                                <a href={project.project_url} target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-accent hover:underline flex items-center gap-1.5 min-h-[44px] transition-colors">
+                                  <Globe className="w-4 h-4" /> Live
+                                </a>
+                              )}
+                              {project.github_url && (
+                                <a href={project.github_url} target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-muted-foreground hover:text-foreground flex items-center gap-1.5 min-h-[44px] transition-colors">
+                                  <Github className="w-4 h-4" /> Code
+                                </a>
+                              )}
+                            </div>
+                          </div>
                         </div>
+                      ) : (
+                        /* No-image fallback — original card style */
+                        <>
+                          {project.sdg_goals?.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 mb-3">
+                              {project.sdg_goals.map((sdg: string, i: number) => (
+                                <Badge key={i} className="text-[10px] sm:text-xs font-bold bg-gradient-to-r from-accent/25 to-accent/10 text-accent border-accent/30 px-2.5 py-1">
+                                  {sdg}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                          <div className="flex items-start gap-3 mb-3">
+                            <h3 className="font-display font-semibold text-foreground flex-1 text-base sm:text-lg">
+                              {project.title}
+                            </h3>
+                            {project.is_featured && <Star className="w-5 h-5 text-accent fill-accent shrink-0" />}
+                          </div>
+                          {project.description && (
+                            <p className="text-xs sm:text-sm text-muted-foreground mb-4 line-clamp-3">
+                              {project.description}
+                            </p>
+                          )}
+                          {project.technologies?.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5">
+                              {project.technologies.map((tech: string, i: number) => (
+                                <Badge key={i} variant="secondary" className="text-xs bg-white/[0.05] border-white/10">
+                                  {tech}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                          <div className="flex gap-4 mt-5 pt-4 border-t border-white/[0.06]">
+                            {project.project_url && (
+                              <a href={project.project_url} target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-accent hover:underline flex items-center gap-1.5 min-h-[44px] transition-colors">
+                                <Globe className="w-4 h-4" /> Live
+                              </a>
+                            )}
+                            {project.github_url && (
+                              <a href={project.github_url} target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-muted-foreground hover:text-foreground flex items-center gap-1.5 min-h-[44px] transition-colors">
+                                <Github className="w-4 h-4" /> Code
+                              </a>
+                            )}
+                          </div>
+                        </>
                       )}
-                      <div className="flex gap-4 mt-5 pt-4 border-t border-white/[0.06]">
-                        {project.project_url && (
-                          <a
-                            href={project.project_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs sm:text-sm text-accent hover:underline flex items-center gap-1.5 min-h-[44px] transition-colors"
-                          >
-                            <Globe className="w-4 h-4" /> Live
-                          </a>
-                        )}
-                        {project.github_url && (
-                          <a
-                            href={project.github_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs sm:text-sm text-muted-foreground hover:text-foreground flex items-center gap-1.5 min-h-[44px] transition-colors"
-                          >
-                            <Github className="w-4 h-4" /> Code
-                          </a>
-                        )}
-                      </div>
                     </div>
-                  </Tilt3DCard>
-                </ScrollReveal3D>
-              ))}
+                  </ScrollReveal3D>
+                );
+              })}
             </div>
           </ScrollReveal3D>
         )}
