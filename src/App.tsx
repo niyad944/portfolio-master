@@ -16,6 +16,7 @@ import ResumeAnalyzer from "./pages/dashboard/ResumeAnalyzer";
 import SkillInsights from "./pages/dashboard/SkillInsights";
 import ActivityLog from "./pages/dashboard/ActivityLog";
 import PublicPortfolio from "./pages/PublicPortfolio";
+import PublicDocumentView from "./pages/PublicDocumentView";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
