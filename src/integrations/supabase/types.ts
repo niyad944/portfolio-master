@@ -311,6 +311,7 @@ export type Database = {
           image_url: string | null
           is_featured: boolean | null
           project_url: string | null
+          sdg_goals: string[] | null
           start_date: string | null
           technologies: string[] | null
           title: string
@@ -326,6 +327,7 @@ export type Database = {
           image_url?: string | null
           is_featured?: boolean | null
           project_url?: string | null
+          sdg_goals?: string[] | null
           start_date?: string | null
           technologies?: string[] | null
           title: string
@@ -341,6 +343,7 @@ export type Database = {
           image_url?: string | null
           is_featured?: boolean | null
           project_url?: string | null
+          sdg_goals?: string[] | null
           start_date?: string | null
           technologies?: string[] | null
           title?: string

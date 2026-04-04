@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useOutletContext } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,9 @@ import {
   Loader2,
   X,
   Calendar,
-  Star
+  Star,
+  Upload,
+  ImageIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -43,9 +45,31 @@ interface Project {
   end_date: string | null;
   project_url: string | null;
   github_url: string | null;
+  image_url: string | null;
   is_featured: boolean;
+  sdg_goals: string[] | null;
   created_at: string;
 }
+
+const SDG_OPTIONS = [
+  "SDG 1: No Poverty",
+  "SDG 2: Zero Hunger",
+  "SDG 3: Good Health & Well-Being",
+  "SDG 4: Quality Education",
+  "SDG 5: Gender Equality",
+  "SDG 6: Clean Water & Sanitation",
+  "SDG 7: Affordable & Clean Energy",
+  "SDG 8: Decent Work & Economic Growth",
+  "SDG 9: Industry, Innovation & Infrastructure",
+  "SDG 10: Reduced Inequalities",
+  "SDG 11: Sustainable Cities & Communities",
+  "SDG 12: Responsible Consumption & Production",
+  "SDG 13: Climate Action",
+  "SDG 14: Life Below Water",
+  "SDG 15: Life on Land",
+  "SDG 16: Peace, Justice & Strong Institutions",
+  "SDG 17: Partnerships for the Goals",
+];
 
 const Projects = () => {
   const { user } = useOutletContext<DashboardContext>();
@@ -55,6 +79,9 @@ const Projects = () => {
   const [saving, setSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -64,7 +91,9 @@ const Projects = () => {
     end_date: "",
     project_url: "",
     github_url: "",
-    is_featured: false
+    is_featured: false,
+    sdg_goals: "",
+    image_url: "",
   });
 
   useEffect(() => {
@@ -80,12 +109,13 @@ const Projects = () => {
       .order("is_featured", { ascending: false })
       .order("start_date", { ascending: false });
 
-    if (data) setProjects(data);
+    if (data) setProjects(data as unknown as Project[]);
     setLoading(false);
   };
 
   const openAddDialog = () => {
     setEditingProject(null);
+    setImagePreview(null);
     setFormData({
       title: "",
       description: "",
@@ -94,13 +124,16 @@ const Projects = () => {
       end_date: "",
       project_url: "",
       github_url: "",
-      is_featured: false
+      is_featured: false,
+      sdg_goals: "",
+      image_url: "",
     });
     setDialogOpen(true);
   };
 
   const openEditDialog = (project: Project) => {
     setEditingProject(project);
+    setImagePreview(project.image_url || null);
     setFormData({
       title: project.title,
       description: project.description || "",
@@ -109,9 +142,48 @@ const Projects = () => {
       end_date: project.end_date || "",
       project_url: project.project_url || "",
       github_url: project.github_url || "",
-      is_featured: project.is_featured
+      is_featured: project.is_featured,
+      sdg_goals: project.sdg_goals?.join(", ") || "",
+      image_url: project.image_url || "",
     });
     setDialogOpen(true);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.match(/^image\/(jpeg|jpg|png)$/)) {
+      toast({ title: "Invalid Format", description: "Only JPG and PNG images are accepted", variant: "destructive" });
+      return;
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      toast({ title: "File Too Large", description: "Max image size is 4MB", variant: "destructive" });
+      return;
+    }
+
+    setUploading(true);
+    const ext = file.name.split(".").pop();
+    const filePath = `${user.id}/${Date.now()}.${ext}`;
+
+    const { error } = await supabase.storage.from("project-images").upload(filePath, file, { upsert: true });
+    if (error) {
+      toast({ title: "Upload Failed", description: error.message, variant: "destructive" });
+      setUploading(false);
+      return;
+    }
+
+    const { data: urlData } = supabase.storage.from("project-images").getPublicUrl(filePath);
+    const publicUrl = urlData.publicUrl;
+    setFormData((prev) => ({ ...prev, image_url: publicUrl }));
+    setImagePreview(publicUrl);
+    setUploading(false);
+    toast({ title: "Image Uploaded" });
+  };
+
+  const removeImage = () => {
+    setFormData((prev) => ({ ...prev, image_url: "" }));
+    setImagePreview(null);
   };
 
   const saveProject = async () => {
@@ -124,8 +196,13 @@ const Projects = () => {
 
     const technologies = formData.technologies
       .split(",")
-      .map(t => t.trim())
-      .filter(t => t.length > 0);
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0);
+
+    const sdgGoals = formData.sdg_goals
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
 
     const projectData = {
       title: capitalizeProper(formData.title),
@@ -135,7 +212,9 @@ const Projects = () => {
       end_date: formData.end_date || null,
       project_url: formData.project_url || null,
       github_url: formData.github_url || null,
-      is_featured: formData.is_featured
+      is_featured: formData.is_featured,
+      image_url: formData.image_url || null,
+      sdg_goals: sdgGoals.length > 0 ? sdgGoals : null,
     };
 
     try {
@@ -149,7 +228,7 @@ const Projects = () => {
 
         if (error) throw error;
         if (data) {
-          setProjects(projects.map(p => p.id === data.id ? data : p));
+          setProjects(projects.map((p) => (p.id === data.id ? (data as unknown as Project) : p)));
           toast({ title: "Project Updated" });
         }
       } else {
@@ -161,7 +240,7 @@ const Projects = () => {
 
         if (error) throw error;
         if (data) {
-          setProjects([data, ...projects]);
+          setProjects([data as unknown as Project, ...projects]);
           toast({ title: "Project Added" });
         }
       }
@@ -176,7 +255,7 @@ const Projects = () => {
   const deleteProject = async (id: string) => {
     const { error } = await supabase.from("projects").delete().eq("id", id);
     if (!error) {
-      setProjects(projects.filter(p => p.id !== id));
+      setProjects(projects.filter((p) => p.id !== id));
       toast({ title: "Project Deleted" });
     }
   };
@@ -190,7 +269,7 @@ const Projects = () => {
       .single();
 
     if (!error && data) {
-      setProjects(projects.map(p => p.id === data.id ? data : p));
+      setProjects(projects.map((p) => (p.id === data.id ? (data as unknown as Project) : p)));
     }
   };
 
@@ -207,9 +286,7 @@ const Projects = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 sm:mb-10">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Projects</h1>
-          <p className="text-muted-foreground">
-            Showcase your work and technical achievements
-          </p>
+          <p className="text-muted-foreground">Showcase your work and technical achievements</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
@@ -250,6 +327,78 @@ const Projects = () => {
                   className="input-focus"
                 />
               </div>
+
+              {/* SDG Goals */}
+              <div className="space-y-2">
+                <Label>SDG Covered</Label>
+                <Input
+                  value={formData.sdg_goals}
+                  onChange={(e) => setFormData({ ...formData, sdg_goals: e.target.value })}
+                  placeholder="SDG 3: Good Health, SDG 4: Quality Education"
+                  className="input-focus"
+                />
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {SDG_OPTIONS.slice(0, 6).map((sdg) => (
+                    <button
+                      key={sdg}
+                      type="button"
+                      onClick={() => {
+                        const current = formData.sdg_goals;
+                        if (current.includes(sdg)) return;
+                        setFormData({
+                          ...formData,
+                          sdg_goals: current ? `${current}, ${sdg}` : sdg,
+                        });
+                      }}
+                      className="text-[10px] px-2 py-1 rounded-full bg-accent/10 text-accent border border-accent/20 hover:bg-accent/20 transition-colors"
+                    >
+                      {sdg.split(":")[0]}
+                    </button>
+                  ))}
+                  <span className="text-[10px] text-muted-foreground self-center">+{SDG_OPTIONS.length - 6} more</span>
+                </div>
+              </div>
+
+              {/* Image Upload */}
+              <div className="space-y-2">
+                <Label>Project Image</Label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png"
+                  className="hidden"
+                  onChange={handleImageUpload}
+                />
+                {imagePreview ? (
+                  <div className="relative rounded-xl overflow-hidden border border-border">
+                    <img src={imagePreview} alt="Preview" className="w-full h-40 object-cover" />
+                    <button
+                      type="button"
+                      onClick={removeImage}
+                      className="absolute top-2 right-2 p-1.5 rounded-full bg-background/80 backdrop-blur-sm text-foreground hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="w-full h-32 rounded-xl border-2 border-dashed border-border hover:border-accent/50 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-accent transition-colors"
+                  >
+                    {uploading ? (
+                      <Loader2 className="w-6 h-6 animate-spin" />
+                    ) : (
+                      <>
+                        <Upload className="w-6 h-6" />
+                        <span className="text-xs">Click to upload (JPG, PNG · max 4MB)</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Start Date</Label>
@@ -303,9 +452,7 @@ const Projects = () => {
                 disabled={saving}
                 className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
               >
-                {saving ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : null}
+                {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                 {editingProject ? "Update Project" : "Add Project"}
               </Button>
             </div>
@@ -319,9 +466,7 @@ const Projects = () => {
             <Briefcase className="w-8 h-8 text-purple-500" />
           </div>
           <h3 className="text-xl font-semibold text-foreground mb-2">No Projects Yet</h3>
-          <p className="text-muted-foreground mb-6">
-            Start showcasing your work by adding your first project
-          </p>
+          <p className="text-muted-foreground mb-6">Start showcasing your work by adding your first project</p>
           <Button onClick={openAddDialog} className="bg-accent hover:bg-accent/90 text-accent-foreground">
             <Plus className="w-4 h-4 mr-2" />
             Add Your First Project
@@ -330,21 +475,46 @@ const Projects = () => {
       ) : (
         <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
           {projects.map((project) => (
-            <div key={project.id} className="document-card">
+            <div key={project.id} className="document-card overflow-hidden">
+              {/* Project Image */}
+              {project.image_url && (
+                <div className="w-full h-40 -mt-1 -mx-0 mb-4 overflow-hidden rounded-t-xl">
+                  <img
+                    src={project.image_url}
+                    alt={project.title}
+                    className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                    loading="lazy"
+                  />
+                </div>
+              )}
+
+              {/* SDG Badges */}
+              {project.sdg_goals && project.sdg_goals.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-3">
+                  {project.sdg_goals.map((sdg, i) => (
+                    <Badge
+                      key={i}
+                      className="text-[10px] sm:text-xs font-bold bg-gradient-to-r from-accent/20 to-accent/10 text-accent border-accent/30 px-2.5 py-1"
+                    >
+                      {sdg}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+
               <div className="flex items-start justify-between mb-3 sm:mb-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
                     <h3 className="font-semibold text-lg text-foreground">{project.title}</h3>
-                    {project.is_featured && (
-                      <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                    )}
+                    {project.is_featured && <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />}
                   </div>
                   {project.start_date && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Calendar className="w-4 h-4" />
                       <span>
                         {new Date(project.start_date).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
-                        {project.end_date && ` - ${new Date(project.end_date).toLocaleDateString("en-US", { month: "short", year: "numeric" })}`}
+                        {project.end_date &&
+                          ` - ${new Date(project.end_date).toLocaleDateString("en-US", { month: "short", year: "numeric" })}`}
                         {!project.end_date && " - Present"}
                       </span>
                     </div>
@@ -353,9 +523,7 @@ const Projects = () => {
               </div>
 
               {project.description && (
-                <p className="text-muted-foreground text-sm mb-4 line-clamp-3">
-                  {project.description}
-                </p>
+                <p className="text-muted-foreground text-sm mb-4 line-clamp-3">{project.description}</p>
               )}
 
               {project.technologies && project.technologies.length > 0 && (
