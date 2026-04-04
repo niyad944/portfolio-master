@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
 import {
   User,
@@ -15,7 +16,10 @@ import {
   Award,
   Loader2,
   ArrowLeft,
-  Star
+  Star,
+  FileText,
+  Image as ImageIcon,
+  ExternalLink,
 } from "lucide-react";
 import FloatingOrbs from "@/components/effects/FloatingOrbs";
 import ScrollReveal3D from "@/components/effects/ScrollReveal3D";
@@ -39,13 +43,16 @@ const PublicPortfolio = () => {
   const [education, setEducation] = useState<any[]>([]);
   const [achievements, setAchievements] = useState<any[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
+  const [certificates, setCertificates] = useState<any[]>([]);
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
+  const [photoError, setPhotoError] = useState(false);
   const [visibleSections, setVisibleSections] = useState<VisibleSections>({
     about: true,
     skills: true,
     education: true,
     achievements: true,
     projects: true,
-    certificates: false
+    certificates: false,
   });
 
   useEffect(() => {
@@ -69,6 +76,12 @@ const PublicPortfolio = () => {
     }
 
     setProfile(profileData);
+
+    // Load profile photo
+    if (profileData.profile_photo_url) {
+      setProfilePhotoUrl(profileData.profile_photo_url);
+    }
+
     if (profileData.visible_sections && typeof profileData.visible_sections === "object") {
       const sections = profileData.visible_sections as Record<string, unknown>;
       setVisibleSections({
@@ -77,60 +90,77 @@ const PublicPortfolio = () => {
         education: Boolean(sections.education ?? true),
         achievements: Boolean(sections.achievements ?? true),
         projects: Boolean(sections.projects ?? true),
-        certificates: Boolean(sections.certificates ?? false)
+        certificates: Boolean(sections.certificates ?? false),
       });
     }
 
     const userId = profileData.user_id;
-    const [skillsRes, eduRes, achRes, projRes] = await Promise.all([
+    const [skillsRes, eduRes, achRes, projRes, certRes] = await Promise.all([
       supabase.from("skills").select("*").eq("user_id", userId),
       supabase.from("education").select("*").eq("user_id", userId).order("start_date", { ascending: false }),
       supabase.from("achievements").select("*").eq("user_id", userId),
-      supabase.from("projects").select("*").eq("user_id", userId).order("is_featured", { ascending: false })
+      supabase.from("projects").select("*").eq("user_id", userId).order("is_featured", { ascending: false }),
+      supabase.from("certificates").select("*").eq("user_id", userId).order("created_at", { ascending: false }),
     ]);
 
     if (skillsRes.data) setSkills(skillsRes.data);
     if (eduRes.data) setEducation(eduRes.data);
     if (achRes.data) setAchievements(achRes.data);
     if (projRes.data) setProjects(projRes.data);
+    if (certRes.data) setCertificates(certRes.data);
 
     setLoading(false);
+  };
+
+  const getFileIcon = (cert: any) => {
+    if (cert.mime_type?.startsWith("image/") || cert.file_name?.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+      return <ImageIcon className="w-5 h-5" />;
+    }
+    return <FileText className="w-5 h-5" />;
+  };
+
+  const getFilePreviewUrl = (cert: any) => {
+    if (!cert.file_path) return null;
+    const { data } = supabase.storage.from("certificates").getPublicUrl(cert.file_path);
+    return data?.publicUrl || null;
   };
 
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.12,
-        delayChildren: 0.15
-      }
-    }
+      transition: { staggerChildren: 0.12, delayChildren: 0.15 },
+    },
   };
 
   const itemVariants = {
     hidden: { opacity: 0, y: 25, filter: "blur(6px)" },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
       filter: "blur(0px)",
-      transition: {
-        duration: 0.8,
-        ease: [0.16, 1, 0.3, 1]
-      }
-    }
+      transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] },
+    },
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex items-center gap-3"
-        >
-          <Loader2 className="w-8 h-8 animate-spin text-accent" />
-        </motion.div>
+      <div className="min-h-screen bg-background p-4 sm:p-8">
+        <div className="max-w-5xl mx-auto space-y-8 pt-16">
+          <div className="flex flex-col items-center gap-4">
+            <Skeleton className="w-28 h-28 rounded-full" />
+            <Skeleton className="w-48 h-8" />
+            <Skeleton className="w-32 h-5" />
+          </div>
+          <div className="space-y-4">
+            <Skeleton className="w-full h-32 rounded-2xl" />
+            <Skeleton className="w-full h-24 rounded-2xl" />
+            <div className="grid grid-cols-2 gap-4">
+              <Skeleton className="h-40 rounded-2xl" />
+              <Skeleton className="h-40 rounded-2xl" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -141,14 +171,15 @@ const PublicPortfolio = () => {
         <FloatingOrbs variant="subtle" />
         <div className="absolute top-[30%] left-[25%] w-[400px] h-[400px] bg-accent/8 rounded-full blur-[150px] pointer-events-none" />
         <div className="absolute bottom-[30%] right-[25%] w-[300px] h-[300px] bg-plasma/6 rounded-full blur-[120px] pointer-events-none" />
-        
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
           className="text-center relative z-10"
         >
-          <h1 className="text-3xl sm:text-4xl font-display font-semibold text-foreground mb-5 tracking-tight">Portfolio Not Found</h1>
+          <h1 className="text-3xl sm:text-4xl font-display font-semibold text-foreground mb-5 tracking-tight">
+            Portfolio Not Found
+          </h1>
           <p className="text-muted-foreground mb-8 text-base sm:text-lg">
             This portfolio doesn't exist or is set to private.
           </p>
@@ -184,7 +215,9 @@ const PublicPortfolio = () => {
             <div className="w-9 h-9 rounded-xl bg-accent/90 flex items-center justify-center transition-all duration-500 group-hover:scale-105 group-hover:shadow-glow">
               <GraduationCap className="w-5 h-5 text-accent-foreground" />
             </div>
-            <span className="font-display font-semibold text-sm sm:text-base text-foreground tracking-wide">ProFolioX</span>
+            <span className="font-display font-semibold text-sm sm:text-base text-foreground tracking-wide">
+              ProFolioX
+            </span>
           </Link>
           <Badge variant="secondary" className="text-xs font-mono bg-accent/10 text-accent border-accent/20">
             Public Portfolio
@@ -202,19 +235,28 @@ const PublicPortfolio = () => {
         >
           <motion.div variants={itemVariants}>
             <Tilt3DCard maxTilt={8} scale={1.03} className="inline-block">
-              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full lumina-border bg-background/60 backdrop-blur-xl flex items-center justify-center mx-auto mb-6 sm:mb-8 shadow-glow float-3d">
-                <User className="w-12 h-12 sm:w-14 sm:h-14 text-accent" />
+              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full lumina-border bg-background/60 backdrop-blur-xl flex items-center justify-center mx-auto mb-6 sm:mb-8 shadow-glow float-3d overflow-hidden">
+                {profilePhotoUrl && !photoError ? (
+                  <img
+                    src={profilePhotoUrl}
+                    alt={profile?.full_name || "Profile"}
+                    className="w-full h-full object-cover"
+                    onError={() => setPhotoError(true)}
+                  />
+                ) : (
+                  <User className="w-12 h-12 sm:w-14 sm:h-14 text-accent" />
+                )}
               </div>
             </Tilt3DCard>
           </motion.div>
-          
+
           <motion.h1
             variants={itemVariants}
             className="text-3xl sm:text-4xl lg:text-5xl font-display font-semibold text-foreground mb-3 tracking-tight"
           >
             {profile?.full_name}
           </motion.h1>
-          
+
           {profile?.location && (
             <motion.p
               variants={itemVariants}
@@ -224,23 +266,35 @@ const PublicPortfolio = () => {
               {profile.location}
             </motion.p>
           )}
-          
+
           <motion.div variants={itemVariants} className="flex items-center justify-center gap-5">
             {profile?.linkedin_url && (
-              <a href={profile.linkedin_url} target="_blank" rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-accent transition-all duration-400 p-3 rounded-xl hover:bg-white/[0.06]">
+              <a
+                href={profile.linkedin_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-accent transition-all duration-400 p-3 rounded-xl hover:bg-white/[0.06]"
+              >
                 <Linkedin className="w-5 h-5" />
               </a>
             )}
             {profile?.github_url && (
-              <a href={profile.github_url} target="_blank" rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-accent transition-all duration-400 p-3 rounded-xl hover:bg-white/[0.06]">
+              <a
+                href={profile.github_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-accent transition-all duration-400 p-3 rounded-xl hover:bg-white/[0.06]"
+              >
                 <Github className="w-5 h-5" />
               </a>
             )}
             {profile?.portfolio_url && (
-              <a href={profile.portfolio_url} target="_blank" rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-accent transition-all duration-400 p-3 rounded-xl hover:bg-white/[0.06]">
+              <a
+                href={profile.portfolio_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-accent transition-all duration-400 p-3 rounded-xl hover:bg-white/[0.06]"
+              >
                 <Globe className="w-5 h-5" />
               </a>
             )}
@@ -276,12 +330,13 @@ const PublicPortfolio = () => {
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.05 }}
                 >
-                  <Badge variant="secondary" className="px-4 py-2 text-xs sm:text-sm bg-accent/10 text-accent border-accent/20 hover:bg-accent/15 transition-all duration-400">
+                  <Badge
+                    variant="secondary"
+                    className="px-4 py-2 text-xs sm:text-sm bg-accent/10 text-accent border-accent/20 hover:bg-accent/15 transition-all duration-400"
+                  >
                     {skill.name}
                     {skill.proficiency_level && (
-                      <span className="ml-2 text-xs text-accent/60 font-mono">
-                        ({skill.proficiency_level})
-                      </span>
+                      <span className="ml-2 text-xs text-accent/60 font-mono">({skill.proficiency_level})</span>
                     )}
                   </Badge>
                 </motion.div>
@@ -328,13 +383,15 @@ const PublicPortfolio = () => {
                   <Tilt3DCard maxTilt={5} scale={1.015}>
                     <div className="glass-card-hover rounded-2xl p-5 sm:p-7 shadow-3d-hover">
                       <div className="flex items-start gap-3 mb-3">
-                        <h3 className="font-display font-semibold text-foreground flex-1 text-base sm:text-lg">{project.title}</h3>
-                        {project.is_featured && (
-                          <Star className="w-5 h-5 text-accent fill-accent shrink-0" />
-                        )}
+                        <h3 className="font-display font-semibold text-foreground flex-1 text-base sm:text-lg">
+                          {project.title}
+                        </h3>
+                        {project.is_featured && <Star className="w-5 h-5 text-accent fill-accent shrink-0" />}
                       </div>
                       {project.description && (
-                        <p className="text-xs sm:text-sm text-muted-foreground mb-4 line-clamp-3">{project.description}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground mb-4 line-clamp-3">
+                          {project.description}
+                        </p>
                       )}
                       {project.technologies?.length > 0 && (
                         <div className="flex flex-wrap gap-1.5">
@@ -347,14 +404,22 @@ const PublicPortfolio = () => {
                       )}
                       <div className="flex gap-4 mt-5 pt-4 border-t border-white/[0.06]">
                         {project.project_url && (
-                          <a href={project.project_url} target="_blank" rel="noopener noreferrer"
-                            className="text-xs sm:text-sm text-accent hover:underline flex items-center gap-1.5 min-h-[44px] transition-colors">
+                          <a
+                            href={project.project_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs sm:text-sm text-accent hover:underline flex items-center gap-1.5 min-h-[44px] transition-colors"
+                          >
                             <Globe className="w-4 h-4" /> Live
                           </a>
                         )}
                         {project.github_url && (
-                          <a href={project.github_url} target="_blank" rel="noopener noreferrer"
-                            className="text-xs sm:text-sm text-muted-foreground hover:text-foreground flex items-center gap-1.5 min-h-[44px] transition-colors">
+                          <a
+                            href={project.github_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs sm:text-sm text-muted-foreground hover:text-foreground flex items-center gap-1.5 min-h-[44px] transition-colors"
+                          >
                             <Github className="w-4 h-4" /> Code
                           </a>
                         )}
@@ -389,12 +454,92 @@ const PublicPortfolio = () => {
             </div>
           </ScrollReveal3D>
         )}
+
+        {/* Certificates / Documents */}
+        {visibleSections.certificates && certificates.length > 0 && (
+          <ScrollReveal3D className="mb-10 sm:mb-14" depth={50} direction="left">
+            <h2 className="text-xl sm:text-2xl font-display font-semibold text-foreground mb-4 sm:mb-5 flex items-center gap-3">
+              <FileText className="w-5 h-5 text-accent" />
+              Documents & Certificates
+            </h2>
+            <div className="grid gap-5 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 perspective-1200">
+              {certificates.map((cert, index) => {
+                const previewUrl = getFilePreviewUrl(cert);
+                const isImage =
+                  cert.mime_type?.startsWith("image/") ||
+                  cert.file_name?.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+
+                return (
+                  <ScrollReveal3D key={cert.id} delay={index * 0.08} direction={index % 2 === 0 ? "left" : "right"}>
+                    <Tilt3DCard maxTilt={5} scale={1.015}>
+                      <Link to={`/p/${slug}/document/${cert.id}`} className="block">
+                        <div className="glass-card-hover rounded-2xl overflow-hidden shadow-3d-hover group cursor-pointer">
+                          {/* Preview thumbnail */}
+                          <div className="h-36 sm:h-40 bg-white/[0.03] flex items-center justify-center overflow-hidden relative">
+                            {previewUrl && isImage ? (
+                              <img
+                                src={previewUrl}
+                                alt={cert.name}
+                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display = "none";
+                                  (e.target as HTMLImageElement).nextElementSibling?.classList.remove("hidden");
+                                }}
+                              />
+                            ) : null}
+                            <div
+                              className={`flex flex-col items-center justify-center gap-2 text-muted-foreground ${
+                                previewUrl && isImage ? "hidden" : ""
+                              }`}
+                            >
+                              {getFileIcon(cert)}
+                              <span className="text-xs font-mono opacity-60">
+                                {cert.mime_type?.includes("pdf") ? "PDF" : cert.type?.toUpperCase()}
+                              </span>
+                            </div>
+                            {/* Hover overlay */}
+                            <div className="absolute inset-0 bg-accent/10 opacity-0 group-hover:opacity-100 transition-opacity duration-400 flex items-center justify-center">
+                              <ExternalLink className="w-6 h-6 text-accent" />
+                            </div>
+                          </div>
+
+                          {/* Card info */}
+                          <div className="p-4 sm:p-5">
+                            <h3 className="font-display font-semibold text-foreground text-sm sm:text-base truncate">
+                              {cert.name}
+                            </h3>
+                            <div className="flex items-center gap-2 mt-2">
+                              <Badge
+                                variant="secondary"
+                                className="text-xs bg-accent/10 text-accent border-accent/20"
+                              >
+                                {cert.type}
+                              </Badge>
+                              {cert.issuing_organization && (
+                                <span className="text-xs text-muted-foreground truncate">
+                                  {cert.issuing_organization}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    </Tilt3DCard>
+                  </ScrollReveal3D>
+                );
+              })}
+            </div>
+          </ScrollReveal3D>
+        )}
       </main>
 
       {/* Footer */}
       <footer className="border-t border-white/[0.06] py-8 sm:py-10 text-center relative z-10">
         <p className="text-xs sm:text-sm text-muted-foreground font-mono tracking-wide">
-          Powered by <Link to="/" className="text-accent hover:underline transition-colors">ProFolioX</Link>
+          Powered by{" "}
+          <Link to="/" className="text-accent hover:underline transition-colors">
+            ProFolioX
+          </Link>
         </p>
       </footer>
     </div>

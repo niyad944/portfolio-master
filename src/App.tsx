@@ -16,6 +16,7 @@ import ResumeAnalyzer from "./pages/dashboard/ResumeAnalyzer";
 import SkillInsights from "./pages/dashboard/SkillInsights";
 import ActivityLog from "./pages/dashboard/ActivityLog";
 import PublicPortfolio from "./pages/PublicPortfolio";
+import PublicDocumentView from "./pages/PublicDocumentView";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,6 +42,7 @@ const App = () => (
             <Route path="activity" element={<ActivityLog />} />
           </Route>
           <Route path="/p/:slug" element={<PublicPortfolio />} />
+          <Route path="/p/:slug/document/:docId" element={<PublicDocumentView />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
