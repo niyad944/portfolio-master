@@ -42,6 +42,7 @@ const App = () => (
             <Route path="activity" element={<ActivityLog />} />
           </Route>
           <Route path="/p/:slug" element={<PublicPortfolio />} />
+          <Route path="/p/:slug/document/:docId" element={<PublicDocumentView />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
