@@ -3,6 +3,7 @@ import { useOutletContext } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -18,6 +19,8 @@ import {
   Sparkles,
   CheckCircle2,
   BookOpen,
+  Edit2,
+  ImageIcon,
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -28,6 +31,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { capitalizeProper } from "@/lib/capitalizeProper";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface DashboardContext {
@@ -44,6 +48,8 @@ interface Certificate {
   file_name: string | null;
   file_size: number | null;
   created_at: string;
+  description: string | null;
+  sdg_goals: string[] | null;
 }
 
 interface ExtractedData {
@@ -66,6 +72,26 @@ const certificateTypes = [
   { value: "other", label: "Other" },
 ];
 
+const SDG_OPTIONS = [
+  "SDG 1: No Poverty",
+  "SDG 2: Zero Hunger",
+  "SDG 3: Good Health & Well-Being",
+  "SDG 4: Quality Education",
+  "SDG 5: Gender Equality",
+  "SDG 6: Clean Water & Sanitation",
+  "SDG 7: Affordable & Clean Energy",
+  "SDG 8: Decent Work & Economic Growth",
+  "SDG 9: Industry, Innovation & Infrastructure",
+  "SDG 10: Reduced Inequalities",
+  "SDG 11: Sustainable Cities & Communities",
+  "SDG 12: Responsible Consumption & Production",
+  "SDG 13: Climate Action",
+  "SDG 14: Life Below Water",
+  "SDG 15: Life on Land",
+  "SDG 16: Peace, Justice & Strong Institutions",
+  "SDG 17: Partnerships for the Goals",
+];
+
 const Certificates = () => {
   const { user } = useOutletContext<DashboardContext>();
   const { toast } = useToast();
@@ -73,6 +99,7 @@ const Certificates = () => {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingCert, setEditingCert] = useState<Certificate | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [newCert, setNewCert] = useState({
@@ -80,8 +107,11 @@ const Certificates = () => {
     type: "certification" as string,
     issuing_organization: "",
     issue_date: "",
+    description: "",
+    sdg_goals: "",
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   // AI analysis state
   const [analyzingId, setAnalyzingId] = useState<string | null>(null);
@@ -103,7 +133,7 @@ const Certificates = () => {
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
-    if (data) setCertificates(data);
+    if (data) setCertificates(data as unknown as Certificate[]);
     setLoading(false);
   };
 
@@ -119,7 +149,41 @@ const Certificates = () => {
         return;
       }
       setSelectedFile(file);
+      if (file.type.startsWith("image/")) {
+        setImagePreview(URL.createObjectURL(file));
+      } else {
+        setImagePreview(null);
+      }
     }
+  };
+
+  const openAddDialog = () => {
+    setEditingCert(null);
+    setImagePreview(null);
+    setNewCert({ name: "", type: "certification", issuing_organization: "", issue_date: "", description: "", sdg_goals: "" });
+    setSelectedFile(null);
+    setDialogOpen(true);
+  };
+
+  const openEditDialog = (cert: Certificate) => {
+    setEditingCert(cert);
+    setNewCert({
+      name: cert.name,
+      type: cert.type,
+      issuing_organization: cert.issuing_organization || "",
+      issue_date: cert.issue_date || "",
+      description: cert.description || "",
+      sdg_goals: cert.sdg_goals?.join(", ") || "",
+    });
+    setSelectedFile(null);
+    if (cert.file_path) {
+      const { data } = supabase.storage.from("certificates").getPublicUrl(cert.file_path);
+      const isImage = cert.file_name?.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+      setImagePreview(isImage ? data.publicUrl : null);
+    } else {
+      setImagePreview(null);
+    }
+    setDialogOpen(true);
   };
 
   const uploadCertificate = async () => {
@@ -135,9 +199,9 @@ const Certificates = () => {
     setUploading(true);
 
     try {
-      let filePath = null;
-      let fileName = null;
-      let fileSize = null;
+      let filePath = editingCert?.file_path || null;
+      let fileName = editingCert?.file_name || null;
+      let fileSize = editingCert?.file_size || null;
       let mimeType = null;
 
       if (selectedFile) {
@@ -156,30 +220,53 @@ const Certificates = () => {
         mimeType = selectedFile.type;
       }
 
-      const { data, error } = await supabase
-        .from("certificates")
-        .insert({
-          user_id: user.id,
-          name: newCert.name,
-          type: newCert.type,
-          issuing_organization: newCert.issuing_organization || null,
-          issue_date: newCert.issue_date || null,
-          file_path: filePath,
-          file_name: fileName,
-          file_size: fileSize,
-          mime_type: mimeType,
-        })
-        .select()
-        .single();
+      const sdgGoals = newCert.sdg_goals
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
 
-      if (error) throw error;
+      const certData = {
+        name: capitalizeProper(newCert.name),
+        type: newCert.type,
+        issuing_organization: newCert.issuing_organization || null,
+        issue_date: newCert.issue_date || null,
+        file_path: filePath,
+        file_name: fileName,
+        file_size: fileSize,
+        description: newCert.description || null,
+        sdg_goals: sdgGoals.length > 0 ? sdgGoals : null,
+        ...(mimeType ? { mime_type: mimeType } : {}),
+      };
 
-      if (data) {
-        setCertificates([data, ...certificates]);
-        toast({ title: "Certificate Added", description: "Your certificate has been securely stored." });
-        setDialogOpen(false);
-        resetForm();
+      if (editingCert) {
+        const { data, error } = await supabase
+          .from("certificates")
+          .update(certData)
+          .eq("id", editingCert.id)
+          .select()
+          .single();
+
+        if (error) throw error;
+        if (data) {
+          setCertificates(certificates.map((c) => (c.id === data.id ? (data as unknown as Certificate) : c)));
+          toast({ title: "Certificate Updated" });
+        }
+      } else {
+        const { data, error } = await supabase
+          .from("certificates")
+          .insert({ ...certData, user_id: user.id, mime_type: mimeType })
+          .select()
+          .single();
+
+        if (error) throw error;
+        if (data) {
+          setCertificates([data as unknown as Certificate, ...certificates]);
+          toast({ title: "Certificate Added", description: "Your certificate has been securely stored." });
+        }
       }
+
+      setDialogOpen(false);
+      resetForm();
     } catch (error: any) {
       toast({
         title: "Upload Failed",
@@ -192,8 +279,10 @@ const Certificates = () => {
   };
 
   const resetForm = () => {
-    setNewCert({ name: "", type: "certification", issuing_organization: "", issue_date: "" });
+    setNewCert({ name: "", type: "certification", issuing_organization: "", issue_date: "", description: "", sdg_goals: "" });
     setSelectedFile(null);
+    setImagePreview(null);
+    setEditingCert(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -279,7 +368,6 @@ const Certificates = () => {
 
     setApplyingToResume(true);
     try {
-      // Check if an education record already exists for this institution
       const { data: existing } = await supabase
         .from("education")
         .select("id")
@@ -340,6 +428,16 @@ const Certificates = () => {
     return certificateTypes.find((t) => t.value === type)?.label || type;
   };
 
+  const getPreviewUrl = (cert: Certificate) => {
+    if (!cert.file_path) return null;
+    const { data } = supabase.storage.from("certificates").getPublicUrl(cert.file_path);
+    return data?.publicUrl || null;
+  };
+
+  const isImageFile = (cert: Certificate) => {
+    return cert.file_name?.match(/\.(jpg|jpeg|png|gif|webp)$/i) || false;
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
@@ -355,111 +453,164 @@ const Certificates = () => {
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Document Locker</h1>
           <p className="text-muted-foreground">Securely store and manage your academic certificates</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">
-              <Upload className="w-4 h-4 mr-2" />
-              Add Certificate
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Add New Certificate</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 mt-4">
-              <div className="space-y-2">
-                <Label>Certificate Name *</Label>
-                <Input
-                  value={newCert.name}
-                  onChange={(e) => setNewCert({ ...newCert, name: e.target.value })}
-                  placeholder="e.g., Bachelor of Technology"
-                  className="input-focus"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Type *</Label>
-                <Select value={newCert.type} onValueChange={(value) => setNewCert({ ...newCert, type: value })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {certificateTypes.map((type) => (
-                      <SelectItem key={type.value} value={type.value}>
-                        {type.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Issuing Organization</Label>
-                <Input
-                  value={newCert.issuing_organization}
-                  onChange={(e) => setNewCert({ ...newCert, issuing_organization: e.target.value })}
-                  placeholder="e.g., University of Technology"
-                  className="input-focus"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Issue Date</Label>
-                <Input
-                  type="date"
-                  value={newCert.issue_date}
-                  onChange={(e) => setNewCert({ ...newCert, issue_date: e.target.value })}
-                  className="input-focus"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Upload File (Optional)</Label>
-                <div
-                  className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors ${
-                    selectedFile ? "border-accent bg-accent/5" : "border-border hover:border-accent/50"
-                  }`}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    className="hidden"
-                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                    onChange={handleFileSelect}
-                  />
-                  {selectedFile ? (
-                    <div className="flex items-center justify-center gap-2">
-                      <FileText className="w-5 h-5 text-accent" />
-                      <span className="text-sm font-medium text-foreground">{selectedFile.name}</span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedFile(null);
-                          if (fileInputRef.current) fileInputRef.current.value = "";
-                        }}
-                        className="text-muted-foreground hover:text-destructive"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                      <p className="text-sm text-muted-foreground">Click to upload or drag and drop</p>
-                      <p className="text-xs text-muted-foreground mt-1">PDF, JPG, PNG, DOC (max 10MB)</p>
-                    </>
-                  )}
-                </div>
-              </div>
-              <Button
-                onClick={uploadCertificate}
-                disabled={uploading}
-                className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
-              >
-                {uploading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
-                {uploading ? "Uploading..." : "Add Certificate"}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <Button onClick={openAddDialog} className="bg-accent hover:bg-accent/90 text-accent-foreground">
+          <Upload className="w-4 h-4 mr-2" />
+          Add Certificate
+        </Button>
       </div>
+
+      {/* Add/Edit Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingCert ? "Edit Certificate" : "Add New Certificate"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-4 max-h-[70vh] overflow-y-auto pr-2">
+            <div className="space-y-2">
+              <Label>Certificate Name *</Label>
+              <Input
+                value={newCert.name}
+                onChange={(e) => setNewCert({ ...newCert, name: e.target.value })}
+                placeholder="e.g., Bachelor of Technology"
+                className="input-focus"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Type *</Label>
+              <Select value={newCert.type} onValueChange={(value) => setNewCert({ ...newCert, type: value })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {certificateTypes.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Issuing Organization</Label>
+              <Input
+                value={newCert.issuing_organization}
+                onChange={(e) => setNewCert({ ...newCert, issuing_organization: e.target.value })}
+                placeholder="e.g., University of Technology"
+                className="input-focus"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Issue Date</Label>
+              <Input
+                type="date"
+                value={newCert.issue_date}
+                onChange={(e) => setNewCert({ ...newCert, issue_date: e.target.value })}
+                className="input-focus"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Description (Optional)</Label>
+              <Textarea
+                value={newCert.description}
+                onChange={(e) => setNewCert({ ...newCert, description: e.target.value })}
+                placeholder="Brief description of this certificate..."
+                className="min-h-[80px] input-focus"
+              />
+            </div>
+
+            {/* SDG Goals */}
+            <div className="space-y-2">
+              <Label>SDGs Covered</Label>
+              <Input
+                value={newCert.sdg_goals}
+                onChange={(e) => setNewCert({ ...newCert, sdg_goals: e.target.value })}
+                placeholder="SDG 4: Quality Education, SDG 9: Industry"
+                className="input-focus"
+              />
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {SDG_OPTIONS.slice(0, 6).map((sdg) => (
+                  <button
+                    key={sdg}
+                    type="button"
+                    onClick={() => {
+                      const current = newCert.sdg_goals;
+                      if (current.includes(sdg)) return;
+                      setNewCert({
+                        ...newCert,
+                        sdg_goals: current ? `${current}, ${sdg}` : sdg,
+                      });
+                    }}
+                    className="text-[10px] px-2 py-1 rounded-full bg-accent/10 text-accent border border-accent/20 hover:bg-accent/20 transition-colors"
+                  >
+                    {sdg.split(":")[0]}
+                  </button>
+                ))}
+                <span className="text-[10px] text-muted-foreground self-center">+{SDG_OPTIONS.length - 6} more</span>
+              </div>
+            </div>
+
+            {/* File Upload */}
+            <div className="space-y-2">
+              <Label>Upload File (Image or PDF)</Label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={handleFileSelect}
+              />
+              {imagePreview ? (
+                <div className="relative rounded-xl overflow-hidden border border-border">
+                  <img src={imagePreview} alt="Preview" className="w-full h-40 object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedFile(null);
+                      setImagePreview(null);
+                      if (fileInputRef.current) fileInputRef.current.value = "";
+                    }}
+                    className="absolute top-2 right-2 p-1.5 rounded-full bg-background/80 backdrop-blur-sm text-foreground hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : selectedFile ? (
+                <div className="flex items-center gap-2 p-3 border rounded-xl">
+                  <FileText className="w-5 h-5 text-accent" />
+                  <span className="text-sm font-medium text-foreground flex-1 truncate">{selectedFile.name}</span>
+                  <button
+                    onClick={() => {
+                      setSelectedFile(null);
+                      if (fileInputRef.current) fileInputRef.current.value = "";
+                    }}
+                    className="text-muted-foreground hover:text-destructive"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full h-32 rounded-xl border-2 border-dashed border-border hover:border-accent/50 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-accent transition-colors"
+                >
+                  <Upload className="w-6 h-6" />
+                  <span className="text-xs">Click to upload (JPG, PNG, PDF · max 10MB)</span>
+                </button>
+              )}
+            </div>
+
+            <Button
+              onClick={uploadCertificate}
+              disabled={uploading}
+              className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
+            >
+              {uploading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
+              {editingCert ? "Update Certificate" : "Add Certificate"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* AI Analysis Results Dialog */}
       <Dialog open={analysisDialogOpen} onOpenChange={setAnalysisDialogOpen}>
@@ -559,7 +710,7 @@ const Certificates = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Certificates Grid */}
+      {/* Certificates Grid — matching Projects layout */}
       {certificates.length === 0 ? (
         <div className="glass-card rounded-2xl p-12 text-center">
           <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-4">
@@ -567,54 +718,95 @@ const Certificates = () => {
           </div>
           <h3 className="text-xl font-semibold text-foreground mb-2">No Certificates Yet</h3>
           <p className="text-muted-foreground mb-6">Start building your document locker by adding your first certificate</p>
-          <Button onClick={() => setDialogOpen(true)} className="bg-accent hover:bg-accent/90 text-accent-foreground">
+          <Button onClick={openAddDialog} className="bg-accent hover:bg-accent/90 text-accent-foreground">
             <Upload className="w-4 h-4 mr-2" />
             Add Your First Certificate
           </Button>
         </div>
       ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {certificates.map((cert) => (
-            <div key={cert.id} className="document-card">
-              <div className="flex items-start justify-between mb-3 sm:mb-4">
-                <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center">
-                  <FileText className="w-6 h-6 text-accent" />
+        <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
+          {certificates.map((cert) => {
+            const previewUrl = getPreviewUrl(cert);
+            const isImage = isImageFile(cert);
+
+            return (
+              <div key={cert.id} className="document-card overflow-hidden">
+                {/* Certificate Image Preview */}
+                {previewUrl && isImage && (
+                  <div className="w-full h-40 -mt-1 mb-4 overflow-hidden rounded-t-xl">
+                    <img
+                      src={previewUrl}
+                      alt={cert.name}
+                      className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                      loading="lazy"
+                    />
+                  </div>
+                )}
+
+                {/* SDG Badges — LARGE & BOLD */}
+                {cert.sdg_goals && cert.sdg_goals.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    {cert.sdg_goals.map((sdg, i) => (
+                      <Badge
+                        key={i}
+                        className="text-[10px] sm:text-xs font-bold bg-gradient-to-r from-accent/20 to-accent/10 text-accent border-accent/30 px-2.5 py-1"
+                      >
+                        {sdg}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex items-start justify-between mb-3 sm:mb-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className="font-semibold text-lg text-foreground">{cert.name}</h3>
+                    </div>
+                    <span className="text-xs font-medium px-2 py-1 rounded-full bg-secondary text-secondary-foreground">
+                      {getTypeLabel(cert.type)}
+                    </span>
+                  </div>
                 </div>
-                <span className="text-xs font-medium px-2 py-1 rounded-full bg-secondary text-secondary-foreground">
-                  {getTypeLabel(cert.type)}
-                </span>
-              </div>
 
-              <h3 className="font-semibold text-foreground mb-2 line-clamp-2">{cert.name}</h3>
+                {cert.issuing_organization && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                    <Building2 className="w-4 h-4" />
+                    <span className="truncate">{cert.issuing_organization}</span>
+                  </div>
+                )}
 
-              {cert.issuing_organization && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                  <Building2 className="w-4 h-4" />
-                  <span className="truncate">{cert.issuing_organization}</span>
-                </div>
-              )}
+                {cert.issue_date && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                    <Calendar className="w-4 h-4" />
+                    <span>{new Date(cert.issue_date).toLocaleDateString()}</span>
+                  </div>
+                )}
 
-              {cert.issue_date && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-                  <Calendar className="w-4 h-4" />
-                  <span>{new Date(cert.issue_date).toLocaleDateString()}</span>
-                </div>
-              )}
+                {cert.description && (
+                  <p className="text-muted-foreground text-sm mb-4 line-clamp-3">{cert.description}</p>
+                )}
 
-              {cert.file_path && (
-                <p className="text-xs text-muted-foreground mb-4">
-                  File: {cert.file_name} ({formatFileSize(cert.file_size)})
-                </p>
-              )}
+                {cert.file_path && !isImage && (
+                  <p className="text-xs text-muted-foreground mb-4">
+                    File: {cert.file_name} ({formatFileSize(cert.file_size)})
+                  </p>
+                )}
 
-              <div className="flex flex-col gap-2 pt-4 border-t border-border">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 pt-4 border-t border-border">
                   {cert.file_path && (
                     <Button size="sm" variant="outline" onClick={() => downloadCertificate(cert)} className="flex-1">
                       <Download className="w-4 h-4 mr-1" />
                       Download
                     </Button>
                   )}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => openEditDialog(cert)}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </Button>
                   <Button
                     size="sm"
                     variant="ghost"
@@ -630,7 +822,7 @@ const Certificates = () => {
                     variant="outline"
                     onClick={() => analyzeCertificate(cert)}
                     disabled={analyzingId === cert.id}
-                    className="w-full border-purple-500/30 text-purple-600 hover:bg-purple-500/10 dark:text-purple-400"
+                    className="w-full mt-2 border-purple-500/30 text-purple-600 hover:bg-purple-500/10 dark:text-purple-400"
                   >
                     {analyzingId === cert.id ? (
                       <>
@@ -646,8 +838,8 @@ const Certificates = () => {
                   </Button>
                 )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

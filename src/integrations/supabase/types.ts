@@ -115,6 +115,7 @@ export type Database = {
           created_at: string
           credential_id: string | null
           credential_url: string | null
+          description: string | null
           expiry_date: string | null
           file_name: string | null
           file_path: string | null
@@ -124,6 +125,7 @@ export type Database = {
           issuing_organization: string | null
           mime_type: string | null
           name: string
+          sdg_goals: string[] | null
           type: string
           updated_at: string
           user_id: string
@@ -132,6 +134,7 @@ export type Database = {
           created_at?: string
           credential_id?: string | null
           credential_url?: string | null
+          description?: string | null
           expiry_date?: string | null
           file_name?: string | null
           file_path?: string | null
@@ -141,6 +144,7 @@ export type Database = {
           issuing_organization?: string | null
           mime_type?: string | null
           name: string
+          sdg_goals?: string[] | null
           type: string
           updated_at?: string
           user_id: string
@@ -149,6 +153,7 @@ export type Database = {
           created_at?: string
           credential_id?: string | null
           credential_url?: string | null
+          description?: string | null
           expiry_date?: string | null
           file_name?: string | null
           file_path?: string | null
@@ -158,6 +163,7 @@ export type Database = {
           issuing_organization?: string | null
           mime_type?: string | null
           name?: string
+          sdg_goals?: string[] | null
           type?: string
           updated_at?: string
           user_id?: string
