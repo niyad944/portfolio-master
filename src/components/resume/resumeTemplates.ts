@@ -45,10 +45,23 @@ const icons = {
   portfolio: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>`,
 };
 
+// Shared print CSS rules for all templates
+const printCSS = `
+  @page { margin: 0; size: A4; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  .sec, .item { page-break-inside: avoid; }
+  .sec { break-inside: avoid; }
+  .item { break-inside: avoid; }
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .page { min-height: auto; }
+  }
+`;
+
 const avatarCircle = (name: string, bgColor: string, textColor: string, photoUrl?: string) => {
   if (photoUrl) {
     return `<div style="width:110px;height:110px;border-radius:50%;overflow:hidden;margin:0 auto 18px;border:3px solid rgba(255,255,255,0.15);">
-      <img src="${photoUrl}" alt="Profile" style="width:100%;height:100%;object-fit:cover;" />
+      <img src="${photoUrl}" alt="Profile" style="width:100%;height:100%;object-fit:cover;" crossorigin="anonymous" />
     </div>`;
   }
   return `<div style="width:110px;height:110px;border-radius:50%;background:${bgColor};display:flex;align-items:center;justify-content:center;margin:0 auto 18px;">
@@ -56,8 +69,43 @@ const avatarCircle = (name: string, bgColor: string, textColor: string, photoUrl
   </div>`;
 };
 
+// ─── Contact block helper ────────────────────────────────────────────
+function contactBlock(p: ResumeData["profile"]) {
+  const items: string[] = [];
+  if (p?.location) items.push(`<div class="contact-item">${icons.location} ${p.location}</div>`);
+  if (p?.phone) items.push(`<div class="contact-item">${icons.phone} ${p.phone}</div>`);
+  if (p?.email) items.push(`<div class="contact-item">${icons.email} ${p.email}</div>`);
+  if (p?.github_url) items.push(`<div class="contact-item">${icons.github} <a href="${p.github_url}">GitHub</a></div>`);
+  if (p?.linkedin_url) items.push(`<div class="contact-item">${icons.linkedin} <a href="${p.linkedin_url}">LinkedIn</a></div>`);
+  if (p?.portfolio_url) items.push(`<div class="contact-item">${icons.portfolio} <a href="${p.portfolio_url}">Portfolio</a></div>`);
+  return items.join("");
+}
+
+// ─── Sections helpers ────────────────────────────────────────────────
+function educationItems(education: ResumeData["education"], sep = ", ") {
+  return education.map(e =>
+    `<div class="item"><div class="item-header"><span class="item-title">${e.degree}${e.field_of_study ? `${sep}${e.field_of_study}` : ""}</span><span class="item-date">${e.start_date || ""} – ${e.end_date || "Present"}</span></div><div class="item-sub">${e.institution}${e.grade ? ` · ${e.grade}` : ""}</div></div>`
+  ).join("");
+}
+
+function projectItems(projects: ResumeData["projects"], techStyle: "inline" | "tags" = "inline") {
+  return projects.map(p => {
+    const techHtml = p.technologies?.length
+      ? techStyle === "tags"
+        ? `<div class="tech">${p.technologies.map(t => `<span>${t}</span>`).join("")}</div>`
+        : `<div class="tech">Technologies: ${p.technologies.join(", ")}</div>`
+      : "";
+    return `<div class="item"><div class="item-title">${p.title}</div>${p.description ? `<div class="item-desc">${p.description}</div>` : ""}${techHtml}</div>`;
+  }).join("");
+}
+
+function achievementItems(achievements: ResumeData["achievements"]) {
+  return achievements.map(a =>
+    `<div class="item"><div class="item-title">${a.title}</div>${a.issuer ? `<div class="item-sub">${a.issuer}</div>` : ""}${a.description ? `<div class="item-desc">${a.description}</div>` : ""}</div>`
+  ).join("");
+}
+
 // ─── TEMPLATE 1: Professional ────────────────────────────────────────
-// Traditional corporate style. Dark sidebar, serif accents, muted blue.
 function professionalResume(d: ResumeData): string {
   const { profile: p, skills, education, projects, achievements } = d;
 
@@ -65,15 +113,11 @@ function professionalResume(d: ResumeData): string {
 <title>${p?.full_name || "Resume"}</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap');
-@page { margin: 0; size: letter; }
-* { margin:0; padding:0; box-sizing:border-box; }
+${printCSS}
 body { font-family: 'Source Sans 3', sans-serif; font-size: 10pt; line-height: 1.55; color: #333; background: #fff; }
-.page { display: grid; grid-template-columns: 240px 1fr; min-height: 11in; }
+.page { display: grid; grid-template-columns: 240px 1fr; min-height: 297mm; }
 
-/* Left Column */
 .left { background: #2c3e50; color: #d5dce4; padding: 40px 28px; }
-.avatar { width: 110px; height: 110px; border-radius: 50%; background: #3d5269; display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; border: 3px solid rgba(255,255,255,0.15); }
-.avatar span { font-size: 36pt; font-weight: 600; color: #a0b4c8; line-height: 1; }
 .name { font-family: 'Playfair Display', serif; font-size: 18pt; font-weight: 700; color: #fff; text-align: center; line-height: 1.2; margin-bottom: 4px; }
 .subtitle { font-size: 8pt; text-transform: uppercase; letter-spacing: 2px; text-align: center; color: rgba(255,255,255,0.4); margin-bottom: 30px; }
 
@@ -85,37 +129,27 @@ body { font-family: 'Source Sans 3', sans-serif; font-size: 10pt; line-height: 1
 .skill-item { font-size: 9pt; color: #c8d2dc; padding: 4px 0; line-height: 1.5; }
 .skill-item::before { content: "•"; color: #7aabe0; margin-right: 8px; }
 
-/* Right Column */
 .right { padding: 40px 36px; }
 .sec { margin-bottom: 22px; }
 .sec-title { font-family: 'Playfair Display', serif; font-size: 12pt; font-weight: 600; color: #2c3e50; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1.5px solid #e0e6ec; letter-spacing: 0.3px; }
 .bio { font-size: 10pt; color: #555; line-height: 1.75; }
-.item { margin-bottom: 14px; page-break-inside: avoid; }
+.item { margin-bottom: 14px; }
 .item-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px; }
 .item-title { font-weight: 600; font-size: 10.5pt; color: #222; }
 .item-date { font-size: 8.5pt; color: #888; }
 .item-sub { font-size: 9.5pt; color: #666; }
 .item-desc { font-size: 9.5pt; color: #555; margin-top: 3px; line-height: 1.6; }
 .tech { font-size: 8.5pt; color: #7aabe0; margin-top: 3px; }
-
-@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
 </style></head><body><div class="page">
 
 <div class="left">
-  ${p?.profile_photo_url
-    ? `<div style="width:110px;height:110px;border-radius:50%;overflow:hidden;margin:0 auto 18px;border:3px solid rgba(255,255,255,0.15);"><img src="${p.profile_photo_url}" alt="Profile" style="width:100%;height:100%;object-fit:cover;" /></div>`
-    : `<div class="avatar"><span>${(p?.full_name || "?")[0].toUpperCase()}</span></div>`}
+  ${avatarCircle(p?.full_name || "?", "#3d5269", "#a0b4c8", p?.profile_photo_url)}
   <div class="name">${p?.full_name || "Your Name"}</div>
   <div class="subtitle">Professional Resume</div>
 
   <div class="left-sec">
     <div class="left-sec-title">Contact</div>
-    ${p?.location ? `<div class="contact-item">${icons.location} ${p.location}</div>` : ""}
-    ${p?.phone ? `<div class="contact-item">${icons.phone} ${p.phone}</div>` : ""}
-    ${p?.email ? `<div class="contact-item">${icons.email} ${p.email}</div>` : ""}
-    ${p?.github_url ? `<div class="contact-item">${icons.github} <a href="${p.github_url}">GitHub</a></div>` : ""}
-    ${p?.linkedin_url ? `<div class="contact-item">${icons.linkedin} <a href="${p.linkedin_url}">LinkedIn</a></div>` : ""}
-    ${p?.portfolio_url ? `<div class="contact-item">${icons.portfolio} <a href="${p.portfolio_url}">Portfolio</a></div>` : ""}
+    ${contactBlock(p)}
   </div>
 
   ${skills.length ? `<div class="left-sec">
@@ -126,21 +160,15 @@ body { font-family: 'Source Sans 3', sans-serif; font-size: 10pt; line-height: 1
 
 <div class="right">
   ${p?.bio ? `<div class="sec"><div class="sec-title">Summary</div><p class="bio">${p.bio}</p></div>` : ""}
-
-  ${education.length ? `<div class="sec"><div class="sec-title">Education</div>${education.map(e => `<div class="item"><div class="item-header"><span class="item-title">${e.degree}${e.field_of_study ? `, ${e.field_of_study}` : ""}</span><span class="item-date">${e.start_date || ""} – ${e.end_date || "Present"}</span></div><div class="item-sub">${e.institution}${e.grade ? ` · ${e.grade}` : ""}</div></div>`).join("")}</div>` : ""}
-
-  ${projects.length ? `<div class="sec"><div class="sec-title">Projects</div>${projects.map(p2 => `<div class="item"><div class="item-title">${p2.title}</div>${p2.description ? `<div class="item-desc">${p2.description}</div>` : ""}${p2.technologies?.length ? `<div class="tech">Technologies: ${p2.technologies.join(", ")}</div>` : ""}</div>`).join("")}</div>` : ""}
-
-  ${achievements.length ? `<div class="sec"><div class="sec-title">Awards & Achievements</div>${achievements.map(a => `<div class="item"><div class="item-title">${a.title}</div>${a.issuer ? `<div class="item-sub">${a.issuer}</div>` : ""}${a.description ? `<div class="item-desc">${a.description}</div>` : ""}</div>`).join("")}</div>` : ""}
+  ${education.length ? `<div class="sec"><div class="sec-title">Education</div>${educationItems(education)}</div>` : ""}
+  ${projects.length ? `<div class="sec"><div class="sec-title">Projects</div>${projectItems(projects)}</div>` : ""}
+  ${achievements.length ? `<div class="sec"><div class="sec-title">Awards & Achievements</div>${achievementItems(achievements)}</div>` : ""}
 </div>
 
-</div>
-<script>window.onload=function(){window.print();window.onafterprint=function(){window.close();};};</script>
-</body></html>`;
+</div></body></html>`;
 }
 
 // ─── TEMPLATE 2: Modern ─────────────────────────────────────────────
-// Contemporary with soft gray sidebar, blue accents, clean sans-serif.
 function modernResume(d: ResumeData): string {
   const { profile: p, skills, education, projects, achievements } = d;
 
@@ -148,15 +176,11 @@ function modernResume(d: ResumeData): string {
 <title>${p?.full_name || "Resume"}</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-@page { margin: 0; size: letter; }
-* { margin:0; padding:0; box-sizing:border-box; }
+${printCSS}
 body { font-family: 'Inter', sans-serif; font-size: 9.5pt; line-height: 1.5; color: #1a1a1a; background: #fff; }
-.page { display: grid; grid-template-columns: 220px 1fr; min-height: 11in; }
+.page { display: grid; grid-template-columns: 220px 1fr; min-height: 297mm; }
 
-/* Left Column */
 .left { background: #f4f6f8; padding: 38px 24px; border-right: 1px solid #e8ecf0; }
-.avatar { width: 100px; height: 100px; border-radius: 50%; background: #dce3ea; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
-.avatar span { font-size: 32pt; font-weight: 600; color: #7a8da0; line-height: 1; }
 .name { font-size: 16pt; font-weight: 700; color: #1a1a1a; text-align: center; line-height: 1.2; margin-bottom: 2px; }
 .subtitle { font-size: 7.5pt; text-transform: uppercase; letter-spacing: 2.5px; text-align: center; color: #3b82f6; margin-bottom: 28px; font-weight: 500; }
 
@@ -168,37 +192,27 @@ body { font-family: 'Inter', sans-serif; font-size: 9.5pt; line-height: 1.5; col
 .skill-item { font-size: 8.5pt; color: #444; padding: 3px 0; }
 .skill-item::before { content: "·"; color: #3b82f6; margin-right: 8px; font-weight: 700; }
 
-/* Right Column */
 .right { padding: 38px 34px; }
 .sec { margin-bottom: 20px; }
-.sec-title { font-size: 10pt; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; padding-bottom: 5px; border-bottom: 2px solid #3b82f6; text-transform: uppercase; letter-spacing: 1px; font-size: 9pt; }
+.sec-title { font-size: 9pt; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; padding-bottom: 5px; border-bottom: 2px solid #3b82f6; text-transform: uppercase; letter-spacing: 1px; }
 .bio { font-size: 9.5pt; color: #444; line-height: 1.7; }
-.item { margin-bottom: 12px; page-break-inside: avoid; }
+.item { margin-bottom: 12px; }
 .item-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1px; }
 .item-title { font-weight: 600; font-size: 10pt; color: #111; }
 .item-date { font-size: 8pt; color: #888; background: #f0f4ff; padding: 1px 8px; border-radius: 8px; }
 .item-sub { font-size: 9pt; color: #666; }
 .item-desc { font-size: 9pt; color: #555; margin-top: 3px; line-height: 1.6; }
 .tech { font-size: 8pt; color: #3b82f6; margin-top: 2px; }
-
-@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
 </style></head><body><div class="page">
 
 <div class="left">
-  ${p?.profile_photo_url
-    ? `<div style="width:100px;height:100px;border-radius:50%;overflow:hidden;margin:0 auto 16px;"><img src="${p.profile_photo_url}" alt="Profile" style="width:100%;height:100%;object-fit:cover;" /></div>`
-    : `<div class="avatar"><span>${(p?.full_name || "?")[0].toUpperCase()}</span></div>`}
+  ${avatarCircle(p?.full_name || "?", "#dce3ea", "#7a8da0", p?.profile_photo_url)}
   <div class="name">${p?.full_name || "Your Name"}</div>
   <div class="subtitle">Resume</div>
 
   <div class="left-sec">
     <div class="left-sec-title">Contact</div>
-    ${p?.location ? `<div class="contact-item">${icons.location} ${p.location}</div>` : ""}
-    ${p?.phone ? `<div class="contact-item">${icons.phone} ${p.phone}</div>` : ""}
-    ${p?.email ? `<div class="contact-item">${icons.email} ${p.email}</div>` : ""}
-    ${p?.github_url ? `<div class="contact-item">${icons.github} <a href="${p.github_url}">GitHub</a></div>` : ""}
-    ${p?.linkedin_url ? `<div class="contact-item">${icons.linkedin} <a href="${p.linkedin_url}">LinkedIn</a></div>` : ""}
-    ${p?.portfolio_url ? `<div class="contact-item">${icons.portfolio} <a href="${p.portfolio_url}">Portfolio</a></div>` : ""}
+    ${contactBlock(p)}
   </div>
 
   ${skills.length ? `<div class="left-sec">
@@ -209,21 +223,15 @@ body { font-family: 'Inter', sans-serif; font-size: 9.5pt; line-height: 1.5; col
 
 <div class="right">
   ${p?.bio ? `<div class="sec"><div class="sec-title">Summary</div><p class="bio">${p.bio}</p></div>` : ""}
-
-  ${education.length ? `<div class="sec"><div class="sec-title">Education</div>${education.map(e => `<div class="item"><div class="item-header"><span class="item-title">${e.degree}${e.field_of_study ? ` in ${e.field_of_study}` : ""}</span><span class="item-date">${e.start_date || ""} – ${e.end_date || "Present"}</span></div><div class="item-sub">${e.institution}${e.grade ? ` · ${e.grade}` : ""}</div></div>`).join("")}</div>` : ""}
-
-  ${projects.length ? `<div class="sec"><div class="sec-title">Projects</div>${projects.map(p2 => `<div class="item"><div class="item-title">${p2.title}</div>${p2.description ? `<div class="item-desc">${p2.description}</div>` : ""}${p2.technologies?.length ? `<div class="tech">${p2.technologies.join(" · ")}</div>` : ""}</div>`).join("")}</div>` : ""}
-
-  ${achievements.length ? `<div class="sec"><div class="sec-title">Achievements</div>${achievements.map(a => `<div class="item"><div class="item-title">${a.title}</div>${a.issuer ? `<div class="item-sub">${a.issuer}</div>` : ""}${a.description ? `<div class="item-desc">${a.description}</div>` : ""}</div>`).join("")}</div>` : ""}
+  ${education.length ? `<div class="sec"><div class="sec-title">Education</div>${educationItems(education, " in ")}</div>` : ""}
+  ${projects.length ? `<div class="sec"><div class="sec-title">Projects</div>${projectItems(projects)}</div>` : ""}
+  ${achievements.length ? `<div class="sec"><div class="sec-title">Achievements</div>${achievementItems(achievements)}</div>` : ""}
 </div>
 
-</div>
-<script>window.onload=function(){window.print();window.onafterprint=function(){window.close();};};</script>
-</body></html>`;
+</div></body></html>`;
 }
 
 // ─── TEMPLATE 3: Minimal ────────────────────────────────────────────
-// Ultra-clean two-column. White sidebar, thin borders, maximum whitespace.
 function minimalResume(d: ResumeData): string {
   const { profile: p, skills, education, projects, achievements } = d;
 
@@ -231,15 +239,11 @@ function minimalResume(d: ResumeData): string {
 <title>${p?.full_name || "Resume"}</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
-@page { margin: 0; size: letter; }
-* { margin:0; padding:0; box-sizing:border-box; }
+${printCSS}
 body { font-family: 'IBM Plex Sans', sans-serif; font-size: 9.5pt; line-height: 1.55; color: #333; background: #fff; }
-.page { display: grid; grid-template-columns: 210px 1fr; min-height: 11in; }
+.page { display: grid; grid-template-columns: 210px 1fr; min-height: 297mm; }
 
-/* Left Column */
 .left { padding: 44px 24px; border-right: 1px solid #e5e5e5; }
-.avatar { width: 90px; height: 90px; border-radius: 50%; background: #f0f0f0; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
-.avatar span { font-size: 28pt; font-weight: 300; color: #999; line-height: 1; }
 .name { font-size: 15pt; font-weight: 500; color: #222; text-align: center; line-height: 1.25; margin-bottom: 2px; letter-spacing: -0.3px; }
 .subtitle { font-size: 7pt; text-transform: uppercase; letter-spacing: 3px; text-align: center; color: #bbb; margin-bottom: 32px; }
 
@@ -250,37 +254,27 @@ body { font-family: 'IBM Plex Sans', sans-serif; font-size: 9.5pt; line-height: 
 .contact-item a { color: #555; text-decoration: none; }
 .skill-item { font-size: 8.5pt; color: #555; padding: 3px 0; font-weight: 300; }
 
-/* Right Column */
 .right { padding: 44px 36px; }
 .sec { margin-bottom: 26px; }
 .sec-title { font-size: 8pt; font-weight: 500; color: #999; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 3px; }
 .bio { font-size: 9.5pt; color: #555; line-height: 1.8; font-weight: 300; }
-.item { margin-bottom: 16px; page-break-inside: avoid; }
+.item { margin-bottom: 16px; }
 .item-header { display: flex; justify-content: space-between; align-items: baseline; }
 .item-title { font-weight: 500; font-size: 10pt; color: #222; }
 .item-date { font-size: 8pt; color: #bbb; }
 .item-sub { font-size: 9pt; color: #888; }
 .item-desc { font-size: 9pt; color: #666; margin-top: 4px; line-height: 1.65; font-weight: 300; }
 .tech { font-size: 8pt; color: #bbb; margin-top: 3px; font-weight: 300; }
-
-@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
 </style></head><body><div class="page">
 
 <div class="left">
-  ${p?.profile_photo_url
-    ? `<div style="width:90px;height:90px;border-radius:50%;overflow:hidden;margin:0 auto 16px;"><img src="${p.profile_photo_url}" alt="Profile" style="width:100%;height:100%;object-fit:cover;" /></div>`
-    : `<div class="avatar"><span>${(p?.full_name || "?")[0].toUpperCase()}</span></div>`}
+  ${avatarCircle(p?.full_name || "?", "#f0f0f0", "#999", p?.profile_photo_url)}
   <div class="name">${p?.full_name || "Your Name"}</div>
   <div class="subtitle">Resume</div>
 
   <div class="left-sec">
     <div class="left-sec-title">Contact</div>
-    ${p?.location ? `<div class="contact-item">${icons.location} ${p.location}</div>` : ""}
-    ${p?.phone ? `<div class="contact-item">${icons.phone} ${p.phone}</div>` : ""}
-    ${p?.email ? `<div class="contact-item">${icons.email} ${p.email}</div>` : ""}
-    ${p?.github_url ? `<div class="contact-item">${icons.github} <a href="${p.github_url}">GitHub</a></div>` : ""}
-    ${p?.linkedin_url ? `<div class="contact-item">${icons.linkedin} <a href="${p.linkedin_url}">LinkedIn</a></div>` : ""}
-    ${p?.portfolio_url ? `<div class="contact-item">${icons.portfolio} <a href="${p.portfolio_url}">Portfolio</a></div>` : ""}
+    ${contactBlock(p)}
   </div>
 
   ${skills.length ? `<div class="left-sec">
@@ -291,25 +285,18 @@ body { font-family: 'IBM Plex Sans', sans-serif; font-size: 9.5pt; line-height: 
 
 <div class="right">
   ${p?.bio ? `<div class="sec"><div class="sec-title">Summary</div><p class="bio">${p.bio}</p></div>` : ""}
-
-  ${education.length ? `<div class="sec"><div class="sec-title">Education</div>${education.map(e => `<div class="item"><div class="item-header"><span class="item-title">${e.degree}${e.field_of_study ? ` in ${e.field_of_study}` : ""}</span><span class="item-date">${e.start_date || ""} – ${e.end_date || "Present"}</span></div><div class="item-sub">${e.institution}${e.grade ? ` · ${e.grade}` : ""}</div></div>`).join("")}</div>` : ""}
-
-  ${projects.length ? `<div class="sec"><div class="sec-title">Projects</div>${projects.map(p2 => `<div class="item"><div class="item-title">${p2.title}</div>${p2.description ? `<div class="item-desc">${p2.description}</div>` : ""}${p2.technologies?.length ? `<div class="tech">${p2.technologies.join(", ")}</div>` : ""}</div>`).join("")}</div>` : ""}
-
-  ${achievements.length ? `<div class="sec"><div class="sec-title">Achievements</div>${achievements.map(a => `<div class="item"><div class="item-title">${a.title}</div>${a.issuer ? `<div class="item-sub">${a.issuer}</div>` : ""}${a.description ? `<div class="item-desc">${a.description}</div>` : ""}</div>`).join("")}</div>` : ""}
+  ${education.length ? `<div class="sec"><div class="sec-title">Education</div>${educationItems(education, " in ")}</div>` : ""}
+  ${projects.length ? `<div class="sec"><div class="sec-title">Projects</div>${projectItems(projects)}</div>` : ""}
+  ${achievements.length ? `<div class="sec"><div class="sec-title">Achievements</div>${achievementItems(achievements)}</div>` : ""}
 </div>
 
-</div>
-<script>window.onload=function(){window.print();window.onafterprint=function(){window.close();};};</script>
-</body></html>`;
+</div></body></html>`;
 }
 
 // ─── TEMPLATE 4: Creative ───────────────────────────────────────────
-// Dark charcoal sidebar with teal accents, bold typography, dense skills.
 function creativeResume(d: ResumeData): string {
   const { profile: p, skills, education, projects, achievements } = d;
 
-  // Group skills by category
   const grouped: Record<string, string[]> = {};
   skills.forEach(s => {
     const cat = s.category || s.proficiency_level || "Skills";
@@ -321,15 +308,11 @@ function creativeResume(d: ResumeData): string {
 <title>${p?.full_name || "Resume"}</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-@page { margin: 0; size: letter; }
-* { margin:0; padding:0; box-sizing:border-box; }
+${printCSS}
 body { font-family: 'Space Grotesk', sans-serif; font-size: 9.5pt; line-height: 1.5; color: #1e1e1e; background: #fff; }
-.page { display: grid; grid-template-columns: 235px 1fr; min-height: 11in; }
+.page { display: grid; grid-template-columns: 235px 1fr; min-height: 297mm; }
 
-/* Left Column */
 .left { background: #1a1a2e; color: #c8cfe0; padding: 36px 24px; }
-.avatar { width: 100px; height: 100px; border-radius: 50%; background: #2a2a4a; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; border: 2px solid #3d3d6b; }
-.avatar span { font-size: 30pt; font-weight: 600; color: #5eead4; line-height: 1; }
 .name { font-size: 17pt; font-weight: 700; color: #fff; text-align: center; line-height: 1.2; margin-bottom: 3px; }
 .subtitle { font-family: 'JetBrains Mono', monospace; font-size: 7pt; text-transform: uppercase; letter-spacing: 2.5px; text-align: center; color: #5eead4; margin-bottom: 28px; }
 
@@ -342,12 +325,11 @@ body { font-family: 'Space Grotesk', sans-serif; font-size: 9.5pt; line-height: 
 .skill-label { font-family: 'JetBrains Mono', monospace; font-size: 7pt; color: #5eead4; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
 .skill-items { font-size: 8.5pt; color: #a0aec0; line-height: 1.6; }
 
-/* Right Column */
 .right { padding: 36px 34px; }
 .sec { margin-bottom: 20px; }
-.sec-title { font-size: 10pt; font-weight: 600; color: #1a1a2e; margin-bottom: 8px; padding-bottom: 5px; border-bottom: 2px solid #1a1a2e; text-transform: uppercase; letter-spacing: 1px; font-size: 9pt; }
+.sec-title { font-size: 9pt; font-weight: 600; color: #1a1a2e; margin-bottom: 8px; padding-bottom: 5px; border-bottom: 2px solid #1a1a2e; text-transform: uppercase; letter-spacing: 1px; }
 .bio { font-size: 9.5pt; color: #444; line-height: 1.75; }
-.item { margin-bottom: 13px; page-break-inside: avoid; }
+.item { margin-bottom: 13px; }
 .item-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1px; }
 .item-title { font-weight: 600; font-size: 10pt; color: #111; }
 .item-date { font-family: 'JetBrains Mono', monospace; font-size: 7.5pt; color: #999; }
@@ -355,25 +337,16 @@ body { font-family: 'Space Grotesk', sans-serif; font-size: 9.5pt; line-height: 
 .item-desc { font-size: 9pt; color: #555; margin-top: 3px; line-height: 1.6; }
 .tech { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
 .tech span { font-family: 'JetBrains Mono', monospace; font-size: 7.5pt; background: #f0fdf4; color: #059669; padding: 2px 8px; border-radius: 3px; border: 1px solid #bbf7d0; }
-
-@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
 </style></head><body><div class="page">
 
 <div class="left">
-  ${p?.profile_photo_url
-    ? `<div style="width:100px;height:100px;border-radius:50%;overflow:hidden;margin:0 auto 16px;border:2px solid #3d3d6b;"><img src="${p.profile_photo_url}" alt="Profile" style="width:100%;height:100%;object-fit:cover;" /></div>`
-    : `<div class="avatar"><span>${(p?.full_name || "?")[0].toUpperCase()}</span></div>`}
+  ${avatarCircle(p?.full_name || "?", "#2a2a4a", "#5eead4", p?.profile_photo_url)}
   <div class="name">${p?.full_name || "Your Name"}</div>
   <div class="subtitle">Creative Resume</div>
 
   <div class="left-sec">
     <div class="left-sec-title">Contact</div>
-    ${p?.location ? `<div class="contact-item">${icons.location} ${p.location}</div>` : ""}
-    ${p?.phone ? `<div class="contact-item">${icons.phone} ${p.phone}</div>` : ""}
-    ${p?.email ? `<div class="contact-item">${icons.email} ${p.email}</div>` : ""}
-    ${p?.github_url ? `<div class="contact-item">${icons.github} <a href="${p.github_url}">GitHub</a></div>` : ""}
-    ${p?.linkedin_url ? `<div class="contact-item">${icons.linkedin} <a href="${p.linkedin_url}">LinkedIn</a></div>` : ""}
-    ${p?.portfolio_url ? `<div class="contact-item">${icons.portfolio} <a href="${p.portfolio_url}">Portfolio</a></div>` : ""}
+    ${contactBlock(p)}
   </div>
 
   ${skills.length ? `<div class="left-sec">
@@ -384,17 +357,12 @@ body { font-family: 'Space Grotesk', sans-serif; font-size: 9.5pt; line-height: 
 
 <div class="right">
   ${p?.bio ? `<div class="sec"><div class="sec-title">Summary</div><p class="bio">${p.bio}</p></div>` : ""}
-
-  ${projects.length ? `<div class="sec"><div class="sec-title">Projects</div>${projects.map(p2 => `<div class="item"><div class="item-title">${p2.title}</div>${p2.description ? `<div class="item-desc">${p2.description}</div>` : ""}${p2.technologies?.length ? `<div class="tech">${p2.technologies.map(t => `<span>${t}</span>`).join("")}</div>` : ""}</div>`).join("")}</div>` : ""}
-
-  ${education.length ? `<div class="sec"><div class="sec-title">Education</div>${education.map(e => `<div class="item"><div class="item-header"><span class="item-title">${e.degree}${e.field_of_study ? ` — ${e.field_of_study}` : ""}</span><span class="item-date">${e.start_date || ""} – ${e.end_date || "Present"}</span></div><div class="item-sub">${e.institution}${e.grade ? ` · ${e.grade}` : ""}</div></div>`).join("")}</div>` : ""}
-
-  ${achievements.length ? `<div class="sec"><div class="sec-title">Achievements</div>${achievements.map(a => `<div class="item"><div class="item-title">${a.title}</div>${a.issuer ? `<div class="item-sub">${a.issuer}</div>` : ""}${a.description ? `<div class="item-desc">${a.description}</div>` : ""}</div>`).join("")}</div>` : ""}
+  ${projects.length ? `<div class="sec"><div class="sec-title">Projects</div>${projectItems(projects, "tags")}</div>` : ""}
+  ${education.length ? `<div class="sec"><div class="sec-title">Education</div>${educationItems(education, " — ")}</div>` : ""}
+  ${achievements.length ? `<div class="sec"><div class="sec-title">Achievements</div>${achievementItems(achievements)}</div>` : ""}
 </div>
 
-</div>
-<script>window.onload=function(){window.print();window.onafterprint=function(){window.close();};};</script>
-</body></html>`;
+</div></body></html>`;
 }
 
 // ─── Template map ────────────────────────────────────────────────────
@@ -403,7 +371,6 @@ export const resumeTemplateGenerators: Record<string, (d: ResumeData) => string>
   modern: modernResume,
   creative: creativeResume,
   minimal: minimalResume,
-  // Fallbacks for any template_key
   "minimal-corporate": professionalResume,
   "modern-creative": modernResume,
   "elegant-professional": minimalResume,
