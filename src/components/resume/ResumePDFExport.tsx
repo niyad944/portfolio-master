@@ -1,6 +1,6 @@
-import { useState, useRef } from "react";
+import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2, Eye, MapPin, Phone, Mail, Github, Linkedin, Globe } from "lucide-react";
+import { Download, Loader2, Eye } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -8,7 +8,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { getResumeHTML, templatePreviewStyles } from "./resumeTemplates";
+import { getResumeHTML } from "./resumeTemplates";
+import ResumePreview from "./ResumePreview";
 
 interface ResumeContent {
   profile: {
@@ -52,34 +53,141 @@ interface ResumePDFExportProps {
 const ResumePDFExport = ({ content, templateKey = "professional", onGenerated }: ResumePDFExportProps) => {
   const [exporting, setExporting] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
-  const printRef = useRef<HTMLDivElement>(null);
 
-  const { profile, skills, education, projects, achievements } = content;
-  const style = templatePreviewStyles[templateKey] || templatePreviewStyles.professional;
-
-  const generatePDF = async () => {
+  const generatePDF = useCallback(async () => {
     setExporting(true);
-    
+
     try {
-      const printWindow = window.open("", "_blank");
-      if (!printWindow) {
-        throw new Error("Please allow popups to download your resume");
+      const [html2canvasModule, jsPDFModule] = await Promise.all([
+        import("html2canvas-pro"),
+        import("jspdf"),
+      ]);
+      const html2canvas = html2canvasModule.default;
+      const { jsPDF } = jsPDFModule;
+
+      // Create an offscreen container to render the resume HTML
+      const container = document.createElement("div");
+      container.style.position = "fixed";
+      container.style.left = "-9999px";
+      container.style.top = "0";
+      container.style.width = "816px"; // 8.5in at 96dpi
+      container.style.background = "#fff";
+      container.style.zIndex = "-9999";
+      document.body.appendChild(container);
+
+      // Render the resume HTML into the container via an iframe-like approach
+      const htmlContent = getResumeHTML(templateKey, content);
+
+      // Parse just the body content and styles from the full HTML
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlContent, "text/html");
+
+      // Copy styles
+      const styles = doc.querySelectorAll("style");
+      styles.forEach((s) => {
+        const cloned = document.createElement("style");
+        cloned.textContent = s.textContent;
+        container.appendChild(cloned);
+      });
+
+      // Copy body content (skip scripts)
+      const bodyContent = doc.body.innerHTML.replace(/<script[\s\S]*?<\/script>/gi, "");
+      const wrapper = document.createElement("div");
+      wrapper.innerHTML = bodyContent;
+      container.appendChild(wrapper);
+
+      // Wait for images to load
+      const images = container.querySelectorAll("img");
+      await Promise.all(
+        Array.from(images).map(
+          (img) =>
+            new Promise<void>((resolve) => {
+              if (img.complete) return resolve();
+              img.onload = () => resolve();
+              img.onerror = () => resolve(); // Skip broken images
+              // Add crossorigin for external images
+              img.crossOrigin = "anonymous";
+            })
+        )
+      );
+
+      // Small delay for fonts to load
+      await new Promise((r) => setTimeout(r, 500));
+
+      // Capture with html2canvas at high DPI
+      const canvas = await html2canvas(container, {
+        scale: 2, // 2x for crisp text (effective ~192dpi)
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#ffffff",
+        width: 816,
+        windowWidth: 816,
+        logging: false,
+      });
+
+      document.body.removeChild(container);
+
+      // A4 dimensions in mm
+      const a4Width = 210;
+      const a4Height = 297;
+
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const imgData = canvas.toDataURL("image/jpeg", 0.95);
+      const canvasAspect = canvas.height / canvas.width;
+      const pdfContentHeight = a4Width * canvasAspect;
+
+      // If content fits on one page
+      if (pdfContentHeight <= a4Height) {
+        pdf.addImage(imgData, "JPEG", 0, 0, a4Width, pdfContentHeight);
+      } else {
+        // Multi-page: slice the canvas
+        const pageCanvasHeight = (a4Height / a4Width) * canvas.width;
+        let yOffset = 0;
+        let pageNum = 0;
+
+        while (yOffset < canvas.height) {
+          if (pageNum > 0) pdf.addPage();
+
+          const sliceHeight = Math.min(pageCanvasHeight, canvas.height - yOffset);
+
+          const pageCanvas = document.createElement("canvas");
+          pageCanvas.width = canvas.width;
+          pageCanvas.height = sliceHeight;
+          const ctx = pageCanvas.getContext("2d");
+          if (ctx) {
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+            ctx.drawImage(
+              canvas,
+              0, yOffset, canvas.width, sliceHeight,
+              0, 0, canvas.width, sliceHeight
+            );
+          }
+
+          const sliceData = pageCanvas.toDataURL("image/jpeg", 0.95);
+          const sliceHeightMm = (sliceHeight / canvas.width) * a4Width;
+          pdf.addImage(sliceData, "JPEG", 0, 0, a4Width, sliceHeightMm);
+
+          yOffset += sliceHeight;
+          pageNum++;
+        }
       }
 
-      const htmlContent = getResumeHTML(templateKey, content);
-      printWindow.document.write(htmlContent);
-      printWindow.document.close();
-      
+      const fileName = `${content.profile?.full_name?.replace(/\s+/g, "_") || "Resume"}_Resume.pdf`;
+      pdf.save(fileName);
       onGenerated?.();
     } catch (error: any) {
       console.error("PDF export error:", error);
-      alert(error.message || "Failed to generate PDF");
+      alert(error.message || "Failed to generate PDF. Please try again.");
     } finally {
       setExporting(false);
     }
-  };
-
-  const initials = (profile?.full_name || "?")[0].toUpperCase();
+  }, [content, templateKey, onGenerated]);
 
   return (
     <div className="flex flex-col sm:flex-row gap-3">
@@ -94,143 +202,7 @@ const ResumePDFExport = ({ content, templateKey = "professional", onGenerated }:
           <DialogHeader>
             <DialogTitle>Resume Preview</DialogTitle>
           </DialogHeader>
-          <div ref={printRef} className="bg-white text-gray-900 rounded-lg shadow-inner overflow-hidden">
-            <div className="grid grid-cols-[200px_1fr]">
-              {/* Left Sidebar */}
-              <div className={`${style.sidebarBg} ${style.sidebarText} p-5`}>
-                {/* Avatar */}
-                {profile?.profile_photo_url ? (
-                  <img
-                    src={profile.profile_photo_url}
-                    alt="Profile"
-                    className="w-20 h-20 rounded-full object-cover mx-auto mb-3 border-2 border-white/20"
-                  />
-                ) : (
-                  <div className={`w-20 h-20 rounded-full ${style.avatarBg} flex items-center justify-center mx-auto mb-3`}>
-                    <span className={`text-2xl font-semibold ${style.avatarText}`}>{initials}</span>
-                  </div>
-                )}
-                <h1 className={`${style.nameClass} text-center mb-1 !text-base`}>
-                  {profile?.full_name || "Your Name"}
-                </h1>
-                <p className="text-[9px] uppercase tracking-[2px] text-center opacity-50 mb-5">Resume</p>
-
-                {/* Contact */}
-                <div className="mb-4">
-                  <p className={`text-[8px] uppercase tracking-[2px] mb-2 ${style.accentColor} font-semibold`}>Contact</p>
-                  <div className="space-y-1.5">
-                    {profile?.location && (
-                      <div className="flex items-center gap-1.5 text-[10px]">
-                        <MapPin className={`w-3 h-3 flex-shrink-0 ${style.accentColor}`} />
-                        <span>{profile.location}</span>
-                      </div>
-                    )}
-                    {profile?.phone && (
-                      <div className="flex items-center gap-1.5 text-[10px]">
-                        <Phone className={`w-3 h-3 flex-shrink-0 ${style.accentColor}`} />
-                        <span>{profile.phone}</span>
-                      </div>
-                    )}
-                    {profile?.email && (
-                      <div className="flex items-center gap-1.5 text-[10px]">
-                        <Mail className={`w-3 h-3 flex-shrink-0 ${style.accentColor}`} />
-                        <span className="truncate">{profile.email}</span>
-                      </div>
-                    )}
-                    {profile?.github_url && (
-                      <div className="flex items-center gap-1.5 text-[10px]">
-                        <Github className={`w-3 h-3 flex-shrink-0 ${style.accentColor}`} />
-                        <span>GitHub</span>
-                      </div>
-                    )}
-                    {profile?.linkedin_url && (
-                      <div className="flex items-center gap-1.5 text-[10px]">
-                        <Linkedin className={`w-3 h-3 flex-shrink-0 ${style.accentColor}`} />
-                        <span>LinkedIn</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Skills */}
-                {skills && skills.length > 0 && (
-                  <div>
-                    <p className={`text-[8px] uppercase tracking-[2px] mb-2 ${style.accentColor} font-semibold`}>Skills</p>
-                    <div className="space-y-1">
-                      {skills.map((s, i) => (
-                        <div key={i} className="text-[10px]">
-                          {templateKey === "creative" ? (
-                            <span className={style.skillClass}>{s.name}</span>
-                          ) : (
-                            <span>• {s.name}</span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Right Content */}
-              <div className="p-6">
-                {profile?.bio && (
-                  <div className="mb-4">
-                    <h2 className={style.sectionTitleClass}>Summary</h2>
-                    <p className="text-xs text-gray-600 leading-relaxed">{profile.bio}</p>
-                  </div>
-                )}
-
-                {education && education.length > 0 && (
-                  <div className="mb-4">
-                    <h2 className={style.sectionTitleClass}>Education</h2>
-                    {education.map((e, i) => (
-                      <div key={i} className="mb-2.5">
-                        <div className="flex justify-between items-baseline">
-                          <span className="font-medium text-xs text-gray-900">
-                            {e.degree}{e.field_of_study ? `, ${e.field_of_study}` : ""}
-                          </span>
-                          <span className="text-[10px] text-gray-400">
-                            {e.start_date} – {e.end_date || "Present"}
-                          </span>
-                        </div>
-                        <p className="text-[10px] text-gray-500">{e.institution}{e.grade ? ` · ${e.grade}` : ""}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {projects && projects.length > 0 && (
-                  <div className="mb-4">
-                    <h2 className={style.sectionTitleClass}>Projects</h2>
-                    {projects.map((p, i) => (
-                      <div key={i} className="mb-2.5">
-                        <p className="font-medium text-xs text-gray-900">{p.title}</p>
-                        {p.description && <p className="text-[10px] text-gray-500">{p.description}</p>}
-                        {p.technologies?.length > 0 && (
-                          <p className={`text-[10px] mt-0.5 ${style.accentColor}`}>
-                            {p.technologies.join(", ")}
-                          </p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {achievements && achievements.length > 0 && (
-                  <div className="mb-4">
-                    <h2 className={style.sectionTitleClass}>Achievements</h2>
-                    {achievements.map((a, i) => (
-                      <div key={i} className="mb-2.5">
-                        <p className="font-medium text-xs text-gray-900">{a.title}</p>
-                        {a.issuer && <p className="text-[10px] text-gray-500">{a.issuer}</p>}
-                        {a.description && <p className="text-[10px] text-gray-500">{a.description}</p>}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+          <ResumePreview content={content} templateKey={templateKey} />
         </DialogContent>
       </Dialog>
 
@@ -245,7 +217,7 @@ const ResumePDFExport = ({ content, templateKey = "professional", onGenerated }:
         ) : (
           <Download className="w-4 h-4 mr-2" />
         )}
-        Download as PDF
+        {exporting ? "Generating PDF..." : "Download as PDF"}
       </Button>
     </div>
   );
