@@ -607,7 +607,8 @@ const PublicPortfolio = () => {
                                   {cert.sdg_goals.map((sdg: string, i: number) => (
                                     <span
                                       key={i}
-                                      className="text-sm sm:text-base font-extrabold tracking-wide text-accent drop-shadow-lg bg-background/70 backdrop-blur-sm px-3 py-1 rounded-lg"
+                                      className="text-base sm:text-lg font-extrabold tracking-wide text-accent drop-shadow-lg bg-background/80 backdrop-blur-md px-4 py-1.5 rounded-xl shadow-[0_0_16px_hsl(var(--accent)/0.2)]"
+                                      style={{ textShadow: '0 0 20px hsl(var(--accent) / 0.3)' }}
                                     >
                                       {sdg.split(":")[0]}
                                     </span>
@@ -623,7 +624,8 @@ const PublicPortfolio = () => {
                                   {cert.sdg_goals.map((sdg: string, i: number) => (
                                     <Badge
                                       key={i}
-                                      className="text-sm sm:text-base font-extrabold bg-gradient-to-r from-accent/30 to-accent/10 text-accent border-accent/40 px-3 py-1.5 tracking-wide"
+                                      className="text-base sm:text-lg font-extrabold bg-gradient-to-r from-accent/30 to-accent/10 text-accent border-accent/40 px-4 py-2 tracking-wide shadow-[0_0_16px_hsl(var(--accent)/0.15)]"
+                                      style={{ textShadow: '0 0 20px hsl(var(--accent) / 0.25)' }}
                                     >
                                       {sdg}
                                     </Badge>
@@ -664,7 +666,8 @@ const PublicPortfolio = () => {
                                 {cert.sdg_goals.map((sdg: string, i: number) => (
                                   <Badge
                                     key={i}
-                                    className="text-sm sm:text-base font-extrabold bg-gradient-to-r from-accent/30 to-accent/10 text-accent border-accent/40 px-3 py-1.5 tracking-wide"
+                                    className="text-base sm:text-lg font-extrabold bg-gradient-to-r from-accent/30 to-accent/10 text-accent border-accent/40 px-4 py-2 tracking-wide shadow-[0_0_16px_hsl(var(--accent)/0.15)]"
+                                    style={{ textShadow: '0 0 20px hsl(var(--accent) / 0.25)' }}
                                   >
                                     {sdg}
                                   </Badge>
