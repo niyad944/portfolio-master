@@ -64,7 +64,7 @@ const PublicDocumentView = () => {
     }
 
     setCertificate(certData);
-
+    setSdgGoals(certData.sdg_goals || []);
     // Get file URL if file_path exists
     if (certData.file_path) {
       const { data: urlData } = supabase.storage
@@ -170,77 +170,126 @@ const PublicDocumentView = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         >
-          {/* Document Info */}
-          <div className="mb-8">
-            <h1 className="text-2xl sm:text-3xl font-display font-semibold text-foreground mb-3">
-              {certificate.name}
-            </h1>
-            <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-              <Badge variant="secondary" className="bg-accent/10 text-accent border-accent/20">
-                {certificate.type}
-              </Badge>
-              {certificate.issuing_organization && (
-                <span className="flex items-center gap-1.5">
-                  <Building2 className="w-4 h-4" />
-                  {certificate.issuing_organization}
-                </span>
+          {/* SDG Hero Banner */}
+          {sdgGoals.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="mb-8"
+            >
+              <div className="flex flex-wrap gap-3 justify-center sm:justify-start">
+                {sdgGoals.map((sdg: string, i: number) => (
+                  <span
+                    key={i}
+                    className="inline-block text-lg sm:text-xl md:text-2xl font-extrabold tracking-wide text-accent bg-accent/10 border border-accent/25 backdrop-blur-sm px-5 py-2.5 rounded-xl shadow-[0_0_20px_hsl(var(--accent)/0.15)]"
+                    style={{ textShadow: '0 0 24px hsl(var(--accent) / 0.3)' }}
+                  >
+                    {sdg}
+                  </span>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Document Info + Preview — two-column on desktop */}
+          <div className="flex flex-col md:flex-row gap-6 md:gap-8">
+            {/* Preview side */}
+            <div className="w-full md:w-3/5 glass-card rounded-2xl overflow-hidden min-h-[300px] sm:min-h-[500px]">
+              {fileUrl && isPdf && (
+                <iframe
+                  src={fileUrl}
+                  className="w-full h-[400px] sm:h-[600px] border-0"
+                  title={certificate.name}
+                />
               )}
-              {certificate.issue_date && (
-                <span className="flex items-center gap-1.5">
-                  <Calendar className="w-4 h-4" />
-                  {new Date(certificate.issue_date).toLocaleDateString()}
-                </span>
+              {fileUrl && isImage && (
+                <div className="flex items-center justify-center p-6 sm:p-10 bg-black/20 h-full">
+                  <img
+                    src={fileUrl}
+                    alt={certificate.name}
+                    className="max-w-full max-h-[500px] object-contain rounded-lg"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = "none";
+                    }}
+                  />
+                </div>
+              )}
+              {(!fileUrl || (!isPdf && !isImage)) && (
+                <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
+                  <FileText className="w-16 h-16 mb-4 opacity-40" />
+                  <p className="text-sm">Preview not available for this file type</p>
+                  {certificate.file_path && (
+                    <Button
+                      onClick={handleDownload}
+                      className="mt-4 bg-accent hover:bg-accent/90 text-accent-foreground"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download to View
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
-            {certificate.credential_url && (
-              <a
-                href={certificate.credential_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-sm text-accent hover:underline mt-3"
-              >
-                <ExternalLink className="w-4 h-4" />
-                Verify Credential
-              </a>
-            )}
-          </div>
 
-          {/* Document Preview */}
-          <div className="glass-card rounded-2xl overflow-hidden min-h-[400px] sm:min-h-[600px]">
-            {fileUrl && isPdf && (
-              <iframe
-                src={fileUrl}
-                className="w-full h-[500px] sm:h-[700px] border-0"
-                title={certificate.name}
-              />
-            )}
-            {fileUrl && isImage && (
-              <div className="flex items-center justify-center p-6 sm:p-10 bg-black/20">
-                <img
-                  src={fileUrl}
-                  alt={certificate.name}
-                  className="max-w-full max-h-[600px] object-contain rounded-lg"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = "none";
-                  }}
-                />
-              </div>
-            )}
-            {(!fileUrl || (!isPdf && !isImage)) && (
-              <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-                <FileText className="w-16 h-16 mb-4 opacity-40" />
-                <p className="text-sm">Preview not available for this file type</p>
-                {certificate.file_path && (
-                  <Button
-                    onClick={handleDownload}
-                    className="mt-4 bg-accent hover:bg-accent/90 text-accent-foreground"
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Download to View
-                  </Button>
+            {/* Details side */}
+            <div className="w-full md:w-2/5 flex flex-col justify-center">
+              <h1 className="text-2xl sm:text-3xl font-display font-semibold text-foreground mb-3">
+                {certificate.name}
+              </h1>
+              <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground mb-4">
+                <Badge variant="secondary" className="bg-accent/10 text-accent border-accent/20">
+                  {certificate.type}
+                </Badge>
+                {certificate.issuing_organization && (
+                  <span className="flex items-center gap-1.5">
+                    <Building2 className="w-4 h-4" />
+                    {certificate.issuing_organization}
+                  </span>
+                )}
+                {certificate.issue_date && (
+                  <span className="flex items-center gap-1.5">
+                    <Calendar className="w-4 h-4" />
+                    {new Date(certificate.issue_date).toLocaleDateString()}
+                  </span>
                 )}
               </div>
-            )}
+
+              {certificate.description && (
+                <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+                  {certificate.description}
+                </p>
+              )}
+
+              {certificate.credential_url && (
+                <a
+                  href={certificate.credential_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-sm text-accent hover:underline mb-4"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Verify Credential
+                </a>
+              )}
+
+              {/* SDG highlight on details side */}
+              {sdgGoals.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-white/[0.06]">
+                  <p className="text-xs uppercase tracking-widest text-muted-foreground mb-3 font-mono">SDG Impact</p>
+                  <div className="flex flex-wrap gap-2">
+                    {sdgGoals.map((sdg: string, i: number) => (
+                      <Badge
+                        key={i}
+                        className="text-sm font-extrabold bg-gradient-to-r from-accent/30 to-accent/10 text-accent border-accent/40 px-3 py-1.5 tracking-wide shadow-[0_0_12px_hsl(var(--accent)/0.12)]"
+                      >
+                        {sdg}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </motion.div>
       </main>
