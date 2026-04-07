@@ -749,7 +749,8 @@ const Certificates = () => {
                     {cert.sdg_goals.map((sdg, i) => (
                       <Badge
                         key={i}
-                        className="text-[10px] sm:text-xs font-bold bg-gradient-to-r from-accent/20 to-accent/10 text-accent border-accent/30 px-2.5 py-1"
+                        className="text-xs sm:text-sm font-extrabold bg-gradient-to-r from-accent/25 to-accent/10 text-accent border-accent/30 px-3 py-1.5 shadow-[0_0_10px_hsl(var(--accent)/0.1)]"
+                        style={{ textShadow: '0 0 12px hsl(var(--accent) / 0.2)' }}
                       >
                         {sdg}
                       </Badge>
