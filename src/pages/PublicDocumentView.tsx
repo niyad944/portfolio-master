@@ -24,6 +24,7 @@ const PublicDocumentView = () => {
   const [certificate, setCertificate] = useState<any>(null);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [profileName, setProfileName] = useState("");
+  const [sdgGoals, setSdgGoals] = useState<string[]>([]);
 
   useEffect(() => {
     fetchDocument();
