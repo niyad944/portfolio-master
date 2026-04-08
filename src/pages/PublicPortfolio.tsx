@@ -406,17 +406,29 @@ const PublicPortfolio = () => {
                 <GraduationCap className="w-5 h-5 text-accent" />
                 Education
               </h2>
-              <div className="space-y-4 sm:space-y-5">
+              <div className="space-y-5 sm:space-y-6">
                 {education.map((edu, index) => (
                   <ScrollReveal3D key={edu.id} delay={index * 0.1} direction="left">
-                    <div className="glass-card rounded-2xl p-5 sm:p-7 shadow-3d-hover">
-                      <h3 className="font-display font-semibold text-foreground text-base sm:text-lg">{edu.degree}</h3>
-                      <p className="text-sm sm:text-base text-muted-foreground">{edu.institution}</p>
-                      <p className="text-xs sm:text-sm text-muted-foreground mt-2 font-mono">
-                        {edu.field_of_study && `${edu.field_of_study} • `}
-                        {edu.start_date} - {edu.end_date || "Present"}
-                        {edu.grade && ` • ${edu.grade}`}
-                      </p>
+                    <div className="group relative glass-card rounded-2xl overflow-hidden shadow-3d-hover hover:border-accent/30 transition-all duration-300">
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-accent to-accent/40 rounded-l-2xl" />
+                      <div className="p-5 sm:p-7 pl-6 sm:pl-8">
+                        <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
+                          <h3 className="font-display font-bold text-foreground text-lg sm:text-xl tracking-tight">{edu.degree}</h3>
+                          {edu.grade && (
+                            <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-sm sm:text-base font-bold bg-accent/15 text-accent border border-accent/25 shadow-[0_0_12px_hsl(var(--accent)/0.1)]">
+                              {edu.grade}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm sm:text-base text-foreground/75 font-medium">{edu.institution}</p>
+                        {edu.field_of_study && (
+                          <p className="text-sm text-muted-foreground mt-1">{edu.field_of_study}</p>
+                        )}
+                        <div className="flex items-center gap-1.5 mt-3 text-xs sm:text-sm text-muted-foreground font-mono">
+                          <GraduationCap className="w-3.5 h-3.5 text-accent/60" />
+                          <span>{edu.start_date} — {edu.end_date || "Present"}</span>
+                        </div>
+                      </div>
                     </div>
                   </ScrollReveal3D>
                 ))}
