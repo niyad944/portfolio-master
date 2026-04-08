@@ -607,22 +607,35 @@ const AboutMe = () => {
           <h2 className="text-lg sm:text-xl font-semibold text-foreground">Education</h2>
         </div>
 
-        <div className="space-y-4 mb-6">
+        <div className="space-y-5 mb-6">
           {education.map((edu) => (
-            <div key={edu.id} className="p-4 border border-border rounded-xl flex justify-between items-start">
-              <div>
-                <h3 className="font-semibold text-foreground">{edu.degree}</h3>
-                <p className="text-muted-foreground">{edu.institution}</p>
-                <p className="text-sm text-muted-foreground">
-                  {edu.field_of_study} {edu.grade && `• ${edu.grade}`}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {edu.start_date} - {edu.end_date || "Present"}
-                </p>
+            <div key={edu.id} className="group relative rounded-2xl border border-border bg-card/50 hover:border-accent/40 hover:shadow-[0_0_20px_hsl(var(--accent)/0.08)] transition-all duration-300 overflow-hidden">
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-accent to-accent/40 rounded-l-2xl" />
+              <div className="p-5 sm:p-6 pl-6 sm:pl-7">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                      <h3 className="text-lg sm:text-xl font-bold text-foreground tracking-tight">{edu.degree}</h3>
+                      {edu.grade && (
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-accent/15 text-accent border border-accent/25">
+                          {edu.grade}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm sm:text-base text-foreground/80 font-medium">{edu.institution}</p>
+                    {edu.field_of_study && (
+                      <p className="text-sm text-muted-foreground mt-1">{edu.field_of_study}</p>
+                    )}
+                    <div className="flex items-center gap-1.5 mt-2.5 text-xs text-muted-foreground">
+                      <CalendarIcon className="w-3.5 h-3.5 text-accent/60" />
+                      <span>{edu.start_date} — {edu.end_date || "Present"}</span>
+                    </div>
+                  </div>
+                  <button onClick={() => removeEducation(edu.id)} className="text-muted-foreground hover:text-destructive transition-colors shrink-0 mt-1">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-              <button onClick={() => removeEducation(edu.id)} className="text-muted-foreground hover:text-destructive">
-                <X className="w-4 h-4" />
-              </button>
             </div>
           ))}
           {education.length === 0 && (
