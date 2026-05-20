@@ -27,6 +27,8 @@ import {
   Sparkles,
   Trash2,
   RefreshCw,
+  Info,
+  Clock,
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 
