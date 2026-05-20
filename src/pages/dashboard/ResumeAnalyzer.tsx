@@ -209,6 +209,7 @@ const ResumeAnalyzer = () => {
 
     setAnalyzing(true);
     setResult(null);
+    setLimitedAnalysis(false);
 
     try {
       // Upload file to storage
