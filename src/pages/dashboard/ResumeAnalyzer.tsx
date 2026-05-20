@@ -104,6 +104,35 @@ const looksLikeParserNoise = (s: string) =>
 const cleanItems = (items: string[] = []) =>
   items.map((s) => (s || "").trim()).filter((s) => s && !looksLikeParserNoise(s));
 
+// Heuristic: decide if extracted text is reliable enough to analyze.
+// Returns true when text is missing, too short, or mostly non-printable (binary/encoded).
+const isTextUnreliable = (text: string): boolean => {
+  if (!text) return true;
+  const trimmed = text.trim();
+  if (trimmed.length < 200) return true;
+  // Strip control chars; measure ratio of readable ASCII/whitespace
+  const printable = trimmed.replace(/[^\x20-\x7E\s]/g, "");
+  const ratio = printable.length / trimmed.length;
+  if (ratio < 0.7) return true;
+  // Word-like tokens: needs a reasonable amount of real words
+  const words = printable.match(/[A-Za-z]{3,}/g) || [];
+  if (words.length < 40) return true;
+  // PDF binary signature with little decoded text
+  if (/^%PDF/.test(trimmed) && words.length < 120) return true;
+  return false;
+};
+
+// Decide if AI response itself indicates limited/failed analysis
+const isAnalysisLimited = (a: AnalysisResult | null): boolean => {
+  if (!a) return true;
+  const skills = cleanItems(a.detected_skills);
+  const strengths = cleanItems(a.strengths);
+  const ats = Number(a.ats_score) || 0;
+  const match = Number(a.job_match_score) || 0;
+  if (skills.length === 0 && strengths.length === 0 && ats < 20 && match < 20) return true;
+  return false;
+};
+
 
 const ResumeAnalyzer = () => {
   const { user } = useOutletContext<DashboardContext>();
