@@ -554,20 +554,25 @@ const ListCard = ({
   icon,
   badgeClass,
   variant = "badge",
+  emptyMessage = "None identified",
 }: {
   title: string;
   items: string[];
   icon: React.ReactNode;
   badgeClass?: string;
   variant?: "badge" | "list";
+  emptyMessage?: string;
 }) => (
-  <Card className="glass-card border-white/10">
+  <Card className="glass-card border-white/[0.08]">
     <CardHeader className="pb-3">
       <CardTitle className="text-foreground flex items-center gap-2 text-base">{icon} {title}</CardTitle>
     </CardHeader>
     <CardContent>
       {items.length === 0 ? (
-        <p className="text-sm text-muted-foreground">None identified</p>
+        <div className="flex items-start gap-2 text-sm text-muted-foreground leading-relaxed">
+          <Info className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground/70" />
+          <span>{emptyMessage}</span>
+        </div>
       ) : variant === "badge" ? (
         <div className="flex flex-wrap gap-2">
           {items.map((item, i) => (
@@ -575,11 +580,11 @@ const ListCard = ({
           ))}
         </div>
       ) : (
-        <ul className="space-y-2">
+        <ul className="space-y-3">
           {items.map((item, i) => (
-            <li key={i} className="flex gap-2 text-sm text-foreground/80">
+            <li key={i} className="flex gap-2 text-sm text-foreground/85 leading-relaxed">
               <span className="text-accent mt-1">•</span>
-              {item}
+              <span>{item}</span>
             </li>
           ))}
         </ul>
@@ -588,4 +593,83 @@ const ListCard = ({
   </Card>
 );
 
+// Experience: neutral, informational fallback when no usable data is detected
+const ExperienceCard = ({ items }: { items: string[] }) => {
+  const hasData = items.length > 0;
+  return (
+    <Card className="glass-card border-white/[0.08]">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-foreground flex items-center gap-2 text-base">
+          <Clock className="w-5 h-5 text-amber-400" /> Experience Timeline
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {hasData ? (
+          <ul className="space-y-3">
+            {items.map((item, i) => (
+              <li key={i} className="flex gap-2 text-sm text-foreground/85 leading-relaxed">
+                <span className="text-amber-400 mt-1">•</span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="rounded-lg border border-amber-500/20 bg-amber-500/[0.06] p-3 flex items-start gap-2">
+            <Info className="w-4 h-4 mt-0.5 shrink-0 text-amber-400" />
+            <p className="text-sm text-foreground/80 leading-relaxed">
+              Experience timeline could not be fully analyzed from this resume. Try uploading a text-based PDF or a resume with clearer formatting for richer career insights.
+            </p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+// Weaknesses: separate ATS weaknesses from parsing issues with a neutral fallback
+const WeaknessCard = ({ items }: { items: string[] }) => {
+  const hasData = items.length > 0;
+  return (
+    <Card className="glass-card border-white/[0.08]">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-foreground flex items-center gap-2 text-base">
+          {hasData ? (
+            <AlertTriangle className="w-5 h-5 text-red-400" />
+          ) : (
+            <Info className="w-5 h-5 text-amber-400" />
+          )}
+          {hasData ? "Weaknesses" : "Resume Insights"}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {hasData ? (
+          <ul className="space-y-3">
+            {items.map((item, i) => (
+              <li key={i} className="flex gap-2 text-sm text-foreground/85 leading-relaxed">
+                <span className="text-red-400 mt-1">•</span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="rounded-lg border border-amber-500/20 bg-amber-500/[0.06] p-3 space-y-2">
+            <div className="flex items-start gap-2">
+              <Info className="w-4 h-4 mt-0.5 shrink-0 text-amber-400" />
+              <p className="text-sm text-foreground/80 leading-relaxed">
+                We couldn't fully extract all resume details. Some recommendations may be limited.
+              </p>
+            </div>
+            <ul className="pl-6 space-y-1.5 text-xs text-muted-foreground">
+              <li>• Try uploading a text-based PDF</li>
+              <li>• Avoid image-only or scanned resumes</li>
+              <li>• Use clear section headings (Experience, Skills, Education)</li>
+            </ul>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
 export default ResumeAnalyzer;
+
