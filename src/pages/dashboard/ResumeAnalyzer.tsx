@@ -220,13 +220,27 @@ const ResumeAnalyzer = () => {
 
       if (uploadError) throw new Error("Failed to upload resume: " + uploadError.message);
 
-      // Extract text
+      // Extract text & assess quality
       const resumeText = await extractTextFromFile(file);
-      if (!resumeText || resumeText.trim().length < 50) {
+      const unreliable = isTextUnreliable(resumeText);
+
+      if (unreliable) {
+        // Enter limited-analysis mode: skip AI, show neutral states
+        setResult({
+          ats_score: 0,
+          job_match_score: 0,
+          detected_skills: [],
+          missing_skills: [],
+          missing_keywords: [],
+          strengths: [],
+          weaknesses: [],
+          suggestions: [],
+          experience_gaps: [],
+        });
+        setLimitedAnalysis(true);
         toast({
-          title: "Could not extract text",
-          description: "For best results, use a text-based PDF or TXT file. Scanned PDFs may not work.",
-          variant: "destructive",
+          title: "Limited analysis",
+          description: "We couldn't read enough text from this resume. Try a text-based PDF for full insights.",
         });
         setAnalyzing(false);
         return;
@@ -241,7 +255,9 @@ const ResumeAnalyzer = () => {
       if (fnData?.error) throw new Error(fnData.error);
 
       const analysis: AnalysisResult = fnData.analysis;
+      const limited = isAnalysisLimited(analysis);
       setResult(analysis);
+      setLimitedAnalysis(limited);
 
       // Save to database
       await supabase.from("resume_analyses").insert({
