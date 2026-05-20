@@ -766,19 +766,19 @@ const WeaknessCard = ({ items, limited = false }: { items: string[]; limited?: b
               </li>
             ))}
           </ul>
+        ) : limited ? (
+          <div className="rounded-lg border border-amber-500/20 bg-amber-500/[0.06] p-3 flex items-start gap-2">
+            <Info className="w-4 h-4 mt-0.5 shrink-0 text-amber-400" />
+            <p className="text-sm text-foreground/80 leading-relaxed">
+              No resume quality issues identified yet. Analysis is limited until readable resume text is extracted.
+            </p>
+          </div>
         ) : (
-          <div className="rounded-lg border border-amber-500/20 bg-amber-500/[0.06] p-3 space-y-2">
-            <div className="flex items-start gap-2">
-              <Info className="w-4 h-4 mt-0.5 shrink-0 text-amber-400" />
-              <p className="text-sm text-foreground/80 leading-relaxed">
-                We couldn't fully extract all resume details. Some recommendations may be limited.
-              </p>
-            </div>
-            <ul className="pl-6 space-y-1.5 text-xs text-muted-foreground">
-              <li>• Try uploading a text-based PDF</li>
-              <li>• Avoid image-only or scanned resumes</li>
-              <li>• Use clear section headings (Experience, Skills, Education)</li>
-            </ul>
+          <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/[0.06] p-3 flex items-start gap-2">
+            <CheckCircle className="w-4 h-4 mt-0.5 shrink-0 text-emerald-400" />
+            <p className="text-sm text-foreground/80 leading-relaxed">
+              No significant weaknesses detected. Nice work!
+            </p>
           </div>
         )}
       </CardContent>
