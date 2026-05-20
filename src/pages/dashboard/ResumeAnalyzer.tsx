@@ -400,20 +400,44 @@ ${result.suggestions.map((s, i) => `  ${i + 1}. ${s}`).join("\n")}
 
                 {/* Skills */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <ListCard title="Skills Detected" items={result.detected_skills} icon={<CheckCircle className="w-5 h-5 text-emerald-400" />} badgeClass="bg-emerald-500/15 text-emerald-300 border-emerald-500/25" />
-                  <ListCard title="Missing Skills" items={result.missing_skills} icon={<XCircle className="w-5 h-5 text-red-400" />} badgeClass="bg-red-500/15 text-red-300 border-red-500/25" />
+                  <ListCard
+                    title="Skills Detected"
+                    items={cleanItems(result.detected_skills)}
+                    icon={<CheckCircle className="w-5 h-5 text-emerald-400" />}
+                    badgeClass="bg-emerald-500/15 text-emerald-300 border-emerald-500/25"
+                    emptyMessage="No technical skills detected yet. Try a text-based resume for richer insights."
+                  />
+                  <ListCard
+                    title="Missing Skills"
+                    items={cleanItems(result.missing_skills)}
+                    icon={<XCircle className="w-5 h-5 text-red-400" />}
+                    badgeClass="bg-red-500/15 text-red-300 border-red-500/25"
+                    emptyMessage="No critical skill gaps spotted for this role."
+                  />
                 </div>
 
-                {/* Keywords & Gaps */}
+                {/* Keywords & Experience */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <ListCard title="Missing Keywords" items={result.missing_keywords} icon={<Search className="w-5 h-5 text-amber-400" />} badgeClass="bg-amber-500/15 text-amber-300 border-amber-500/25" />
-                  <ListCard title="Experience Gaps" items={result.experience_gaps} icon={<AlertTriangle className="w-5 h-5 text-orange-400" />} variant="list" />
+                  <ListCard
+                    title="Missing Keywords"
+                    items={cleanItems(result.missing_keywords)}
+                    icon={<Search className="w-5 h-5 text-amber-400" />}
+                    badgeClass="bg-amber-500/15 text-amber-300 border-amber-500/25"
+                    emptyMessage="Your resume already covers the key ATS keywords for this role."
+                  />
+                  <ExperienceCard items={cleanItems(result.experience_gaps)} />
                 </div>
 
                 {/* Strengths & Weaknesses */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <ListCard title="Strengths" items={result.strengths} icon={<TrendingUp className="w-5 h-5 text-emerald-400" />} variant="list" />
-                  <ListCard title="Weaknesses" items={result.weaknesses} icon={<AlertTriangle className="w-5 h-5 text-red-400" />} variant="list" />
+                  <ListCard
+                    title="Strengths"
+                    items={cleanItems(result.strengths)}
+                    icon={<TrendingUp className="w-5 h-5 text-emerald-400" />}
+                    variant="list"
+                    emptyMessage="Upload a clearer, text-based resume to highlight your strengths."
+                  />
+                  <WeaknessCard items={cleanItems(result.weaknesses)} />
                 </div>
 
                 {/* Suggestions */}
@@ -422,16 +446,21 @@ ${result.suggestions.map((s, i) => `  ${i + 1}. ${s}`).join("\n")}
                     <CardTitle className="text-foreground flex items-center gap-2"><Lightbulb className="w-5 h-5 text-amber-400" /> Improvement Suggestions</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <ol className="space-y-3">
-                      {result.suggestions.map((s, i) => (
-                        <li key={i} className="flex gap-3">
-                          <span className="w-6 h-6 rounded-full bg-accent/15 text-accent text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
-                          <span className="text-sm text-foreground/80">{s}</span>
-                        </li>
-                      ))}
-                    </ol>
+                    {cleanItems(result.suggestions).length === 0 ? (
+                      <p className="text-sm text-muted-foreground">No suggestions available. Try re-uploading a text-based PDF for tailored recommendations.</p>
+                    ) : (
+                      <ol className="space-y-3">
+                        {cleanItems(result.suggestions).map((s, i) => (
+                          <li key={i} className="flex gap-3">
+                            <span className="w-6 h-6 rounded-full bg-accent/15 text-accent text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
+                            <span className="text-sm text-foreground/80 leading-relaxed">{s}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    )}
                   </CardContent>
                 </Card>
+
 
                 {/* Download */}
                 <div className="flex justify-end">
