@@ -142,6 +142,7 @@ const ResumeAnalyzer = () => {
   const [jobRole, setJobRole] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [limitedAnalysis, setLimitedAnalysis] = useState(false);
   const [history, setHistory] = useState<AnalysisRecord[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [activeTab, setActiveTab] = useState("analyze");
