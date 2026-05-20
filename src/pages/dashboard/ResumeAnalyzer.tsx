@@ -626,17 +626,39 @@ ${result.suggestions.map((s, i) => `  ${i + 1}. ${s}`).join("\n")}
 };
 
 // Sub-components
-const ScoreCard = ({ title, score, icon }: { title: string; score: number; icon: React.ReactNode }) => (
-  <Card className={`border ${getScoreBg(score)}`}>
+const ScoreCard = ({
+  title,
+  score,
+  icon,
+  unavailable = false,
+  unavailableLabel = "Analysis unavailable",
+  unavailableSub = "Not enough readable resume content detected.",
+}: {
+  title: string;
+  score: number;
+  icon: React.ReactNode;
+  unavailable?: boolean;
+  unavailableLabel?: string;
+  unavailableSub?: string;
+}) => (
+  <Card className={`border ${unavailable ? "bg-amber-500/[0.06] border-amber-500/25" : getScoreBg(score)}`}>
     <CardContent className="p-4 sm:p-6">
       <div className="flex items-center justify-between mb-3 sm:mb-4">
         <div className="flex items-center gap-2 text-foreground">
-          {icon}
+          {unavailable ? <Info className="w-5 h-5 text-amber-400" /> : icon}
           <span className="text-xs sm:text-sm font-medium">{title}</span>
         </div>
-        <span className={`text-2xl sm:text-3xl font-display font-bold ${getScoreColor(score)}`}>{score}%</span>
+        {unavailable ? (
+          <span className="text-sm sm:text-base font-medium text-amber-300">{unavailableLabel}</span>
+        ) : (
+          <span className={`text-2xl sm:text-3xl font-display font-bold ${getScoreColor(score)}`}>{score}%</span>
+        )}
       </div>
-      <Progress value={score} className="h-2" />
+      {unavailable ? (
+        <p className="text-xs text-muted-foreground leading-relaxed">{unavailableSub}</p>
+      ) : (
+        <Progress value={score} className="h-2" />
+      )}
     </CardContent>
   </Card>
 );
