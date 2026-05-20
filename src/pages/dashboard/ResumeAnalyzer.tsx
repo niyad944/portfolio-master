@@ -104,6 +104,35 @@ const looksLikeParserNoise = (s: string) =>
 const cleanItems = (items: string[] = []) =>
   items.map((s) => (s || "").trim()).filter((s) => s && !looksLikeParserNoise(s));
 
+// Heuristic: decide if extracted text is reliable enough to analyze.
+// Returns true when text is missing, too short, or mostly non-printable (binary/encoded).
+const isTextUnreliable = (text: string): boolean => {
+  if (!text) return true;
+  const trimmed = text.trim();
+  if (trimmed.length < 200) return true;
+  // Strip control chars; measure ratio of readable ASCII/whitespace
+  const printable = trimmed.replace(/[^\x20-\x7E\s]/g, "");
+  const ratio = printable.length / trimmed.length;
+  if (ratio < 0.7) return true;
+  // Word-like tokens: needs a reasonable amount of real words
+  const words = printable.match(/[A-Za-z]{3,}/g) || [];
+  if (words.length < 40) return true;
+  // PDF binary signature with little decoded text
+  if (/^%PDF/.test(trimmed) && words.length < 120) return true;
+  return false;
+};
+
+// Decide if AI response itself indicates limited/failed analysis
+const isAnalysisLimited = (a: AnalysisResult | null): boolean => {
+  if (!a) return true;
+  const skills = cleanItems(a.detected_skills);
+  const strengths = cleanItems(a.strengths);
+  const ats = Number(a.ats_score) || 0;
+  const match = Number(a.job_match_score) || 0;
+  if (skills.length === 0 && strengths.length === 0 && ats < 20 && match < 20) return true;
+  return false;
+};
+
 
 const ResumeAnalyzer = () => {
   const { user } = useOutletContext<DashboardContext>();
@@ -113,6 +142,7 @@ const ResumeAnalyzer = () => {
   const [jobRole, setJobRole] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [limitedAnalysis, setLimitedAnalysis] = useState(false);
   const [history, setHistory] = useState<AnalysisRecord[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [activeTab, setActiveTab] = useState("analyze");
@@ -179,6 +209,7 @@ const ResumeAnalyzer = () => {
 
     setAnalyzing(true);
     setResult(null);
+    setLimitedAnalysis(false);
 
     try {
       // Upload file to storage
@@ -189,13 +220,27 @@ const ResumeAnalyzer = () => {
 
       if (uploadError) throw new Error("Failed to upload resume: " + uploadError.message);
 
-      // Extract text
+      // Extract text & assess quality
       const resumeText = await extractTextFromFile(file);
-      if (!resumeText || resumeText.trim().length < 50) {
+      const unreliable = isTextUnreliable(resumeText);
+
+      if (unreliable) {
+        // Enter limited-analysis mode: skip AI, show neutral states
+        setResult({
+          ats_score: 0,
+          job_match_score: 0,
+          detected_skills: [],
+          missing_skills: [],
+          missing_keywords: [],
+          strengths: [],
+          weaknesses: [],
+          suggestions: [],
+          experience_gaps: [],
+        });
+        setLimitedAnalysis(true);
         toast({
-          title: "Could not extract text",
-          description: "For best results, use a text-based PDF or TXT file. Scanned PDFs may not work.",
-          variant: "destructive",
+          title: "Limited analysis",
+          description: "We couldn't read enough text from this resume. Try a text-based PDF for full insights.",
         });
         setAnalyzing(false);
         return;
@@ -210,7 +255,9 @@ const ResumeAnalyzer = () => {
       if (fnData?.error) throw new Error(fnData.error);
 
       const analysis: AnalysisResult = fnData.analysis;
+      const limited = isAnalysisLimited(analysis);
       setResult(analysis);
+      setLimitedAnalysis(limited);
 
       // Save to database
       await supabase.from("resume_analyses").insert({
@@ -249,7 +296,7 @@ const ResumeAnalyzer = () => {
   };
 
   const handleViewRecord = (record: AnalysisRecord) => {
-    setResult({
+    const r: AnalysisResult = {
       ats_score: record.ats_score || 0,
       job_match_score: record.job_match_score || 0,
       detected_skills: record.detected_skills,
@@ -259,7 +306,9 @@ const ResumeAnalyzer = () => {
       weaknesses: record.weaknesses,
       suggestions: record.suggestions,
       experience_gaps: record.experience_gaps,
-    });
+    };
+    setResult(r);
+    setLimitedAnalysis(isAnalysisLimited(r));
     setJobRole(record.job_role);
     setActiveTab("analyze");
   };
@@ -392,27 +441,61 @@ ${result.suggestions.map((s, i) => `  ${i + 1}. ${s}`).join("\n")}
           <AnimatePresence>
             {result && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-6">
+                {limitedAnalysis && (
+                  <div className="rounded-xl border border-amber-500/25 bg-amber-500/[0.06] p-4 flex items-start gap-3">
+                    <Info className="w-5 h-5 mt-0.5 shrink-0 text-amber-400" />
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-foreground">Limited analysis mode</p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        We couldn't extract enough readable text from this resume to score it accurately. Upload a text-based PDF (not a scan or image) and try again for a full ATS report.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Score Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <ScoreCard title="ATS Compatibility" score={result.ats_score} icon={<BarChart3 className="w-5 h-5" />} />
-                  <ScoreCard title="Job Match" score={result.job_match_score} icon={<Target className="w-5 h-5" />} />
+                  <ScoreCard
+                    title="ATS Compatibility"
+                    score={result.ats_score}
+                    icon={<BarChart3 className="w-5 h-5" />}
+                    unavailable={limitedAnalysis}
+                    unavailableLabel="Analysis unavailable"
+                    unavailableSub="Not enough readable resume content detected."
+                  />
+                  <ScoreCard
+                    title="Job Match"
+                    score={result.job_match_score}
+                    icon={<Target className="w-5 h-5" />}
+                    unavailable={limitedAnalysis}
+                    unavailableLabel="Unable to determine"
+                    unavailableSub="Resume text extraction is limited."
+                  />
                 </div>
 
                 {/* Skills */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <ListCard
                     title="Skills Detected"
-                    items={cleanItems(result.detected_skills)}
+                    items={limitedAnalysis ? [] : cleanItems(result.detected_skills)}
                     icon={<CheckCircle className="w-5 h-5 text-emerald-400" />}
                     badgeClass="bg-emerald-500/15 text-emerald-300 border-emerald-500/25"
-                    emptyMessage="No technical skills detected yet. Try a text-based resume for richer insights."
+                    emptyMessage={
+                      limitedAnalysis
+                        ? "Upload a clearer text-based resume to identify your skills."
+                        : "No technical skills detected yet. Try a text-based resume for richer insights."
+                    }
                   />
                   <ListCard
                     title="Missing Skills"
-                    items={cleanItems(result.missing_skills)}
-                    icon={<XCircle className="w-5 h-5 text-red-400" />}
+                    items={limitedAnalysis ? [] : cleanItems(result.missing_skills)}
+                    icon={limitedAnalysis ? <Info className="w-5 h-5 text-amber-400" /> : <XCircle className="w-5 h-5 text-red-400" />}
                     badgeClass="bg-red-500/15 text-red-300 border-red-500/25"
-                    emptyMessage="No critical skill gaps spotted for this role."
+                    emptyMessage={
+                      limitedAnalysis
+                        ? "Cannot determine missing skills until readable resume text is extracted."
+                        : "No critical skill gaps spotted for this role."
+                    }
                   />
                 </div>
 
@@ -420,46 +503,56 @@ ${result.suggestions.map((s, i) => `  ${i + 1}. ${s}`).join("\n")}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <ListCard
                     title="Missing Keywords"
-                    items={cleanItems(result.missing_keywords)}
+                    items={limitedAnalysis ? [] : cleanItems(result.missing_keywords)}
                     icon={<Search className="w-5 h-5 text-amber-400" />}
                     badgeClass="bg-amber-500/15 text-amber-300 border-amber-500/25"
-                    emptyMessage="Your resume already covers the key ATS keywords for this role."
+                    emptyMessage={
+                      limitedAnalysis
+                        ? "Keyword analysis will appear once readable resume text is detected."
+                        : "Your resume already covers the key ATS keywords for this role."
+                    }
                   />
-                  <ExperienceCard items={cleanItems(result.experience_gaps)} />
+                  <ExperienceCard items={limitedAnalysis ? [] : cleanItems(result.experience_gaps)} />
                 </div>
 
                 {/* Strengths & Weaknesses */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <ListCard
                     title="Strengths"
-                    items={cleanItems(result.strengths)}
-                    icon={<TrendingUp className="w-5 h-5 text-emerald-400" />}
+                    items={limitedAnalysis ? [] : cleanItems(result.strengths)}
+                    icon={limitedAnalysis ? <Info className="w-5 h-5 text-amber-400" /> : <TrendingUp className="w-5 h-5 text-emerald-400" />}
                     variant="list"
-                    emptyMessage="Upload a clearer, text-based resume to highlight your strengths."
+                    emptyMessage={
+                      limitedAnalysis
+                        ? "Upload a clearer text-based resume to identify strengths."
+                        : "Upload a clearer, text-based resume to highlight your strengths."
+                    }
                   />
-                  <WeaknessCard items={cleanItems(result.weaknesses)} />
+                  <WeaknessCard items={limitedAnalysis ? [] : cleanItems(result.weaknesses)} limited={limitedAnalysis} />
                 </div>
 
                 {/* Suggestions */}
-                <Card className="glass-card border-white/10">
-                  <CardHeader>
-                    <CardTitle className="text-foreground flex items-center gap-2"><Lightbulb className="w-5 h-5 text-amber-400" /> Improvement Suggestions</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {cleanItems(result.suggestions).length === 0 ? (
-                      <p className="text-sm text-muted-foreground">No suggestions available. Try re-uploading a text-based PDF for tailored recommendations.</p>
-                    ) : (
-                      <ol className="space-y-3">
-                        {cleanItems(result.suggestions).map((s, i) => (
-                          <li key={i} className="flex gap-3">
-                            <span className="w-6 h-6 rounded-full bg-accent/15 text-accent text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
-                            <span className="text-sm text-foreground/80 leading-relaxed">{s}</span>
-                          </li>
-                        ))}
-                      </ol>
-                    )}
-                  </CardContent>
-                </Card>
+                {!limitedAnalysis && (
+                  <Card className="glass-card border-white/10">
+                    <CardHeader>
+                      <CardTitle className="text-foreground flex items-center gap-2"><Lightbulb className="w-5 h-5 text-amber-400" /> Improvement Suggestions</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {cleanItems(result.suggestions).length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No suggestions available yet. Try re-uploading a text-based PDF for tailored recommendations.</p>
+                      ) : (
+                        <ol className="space-y-3">
+                          {cleanItems(result.suggestions).map((s, i) => (
+                            <li key={i} className="flex gap-3">
+                              <span className="w-6 h-6 rounded-full bg-accent/15 text-accent text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
+                              <span className="text-sm text-foreground/80 leading-relaxed">{s}</span>
+                            </li>
+                          ))}
+                        </ol>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
 
 
                 {/* Download */}
@@ -533,17 +626,39 @@ ${result.suggestions.map((s, i) => `  ${i + 1}. ${s}`).join("\n")}
 };
 
 // Sub-components
-const ScoreCard = ({ title, score, icon }: { title: string; score: number; icon: React.ReactNode }) => (
-  <Card className={`border ${getScoreBg(score)}`}>
+const ScoreCard = ({
+  title,
+  score,
+  icon,
+  unavailable = false,
+  unavailableLabel = "Analysis unavailable",
+  unavailableSub = "Not enough readable resume content detected.",
+}: {
+  title: string;
+  score: number;
+  icon: React.ReactNode;
+  unavailable?: boolean;
+  unavailableLabel?: string;
+  unavailableSub?: string;
+}) => (
+  <Card className={`border ${unavailable ? "bg-amber-500/[0.06] border-amber-500/25" : getScoreBg(score)}`}>
     <CardContent className="p-4 sm:p-6">
       <div className="flex items-center justify-between mb-3 sm:mb-4">
         <div className="flex items-center gap-2 text-foreground">
-          {icon}
+          {unavailable ? <Info className="w-5 h-5 text-amber-400" /> : icon}
           <span className="text-xs sm:text-sm font-medium">{title}</span>
         </div>
-        <span className={`text-2xl sm:text-3xl font-display font-bold ${getScoreColor(score)}`}>{score}%</span>
+        {unavailable ? (
+          <span className="text-sm sm:text-base font-medium text-amber-300">{unavailableLabel}</span>
+        ) : (
+          <span className={`text-2xl sm:text-3xl font-display font-bold ${getScoreColor(score)}`}>{score}%</span>
+        )}
       </div>
-      <Progress value={score} className="h-2" />
+      {unavailable ? (
+        <p className="text-xs text-muted-foreground leading-relaxed">{unavailableSub}</p>
+      ) : (
+        <Progress value={score} className="h-2" />
+      )}
     </CardContent>
   </Card>
 );
@@ -627,8 +742,8 @@ const ExperienceCard = ({ items }: { items: string[] }) => {
 };
 
 // Weaknesses: separate ATS weaknesses from parsing issues with a neutral fallback
-const WeaknessCard = ({ items }: { items: string[] }) => {
-  const hasData = items.length > 0;
+const WeaknessCard = ({ items, limited = false }: { items: string[]; limited?: boolean }) => {
+  const hasData = !limited && items.length > 0;
   return (
     <Card className="glass-card border-white/[0.08]">
       <CardHeader className="pb-3">
@@ -651,19 +766,19 @@ const WeaknessCard = ({ items }: { items: string[] }) => {
               </li>
             ))}
           </ul>
+        ) : limited ? (
+          <div className="rounded-lg border border-amber-500/20 bg-amber-500/[0.06] p-3 flex items-start gap-2">
+            <Info className="w-4 h-4 mt-0.5 shrink-0 text-amber-400" />
+            <p className="text-sm text-foreground/80 leading-relaxed">
+              No resume quality issues identified yet. Analysis is limited until readable resume text is extracted.
+            </p>
+          </div>
         ) : (
-          <div className="rounded-lg border border-amber-500/20 bg-amber-500/[0.06] p-3 space-y-2">
-            <div className="flex items-start gap-2">
-              <Info className="w-4 h-4 mt-0.5 shrink-0 text-amber-400" />
-              <p className="text-sm text-foreground/80 leading-relaxed">
-                We couldn't fully extract all resume details. Some recommendations may be limited.
-              </p>
-            </div>
-            <ul className="pl-6 space-y-1.5 text-xs text-muted-foreground">
-              <li>• Try uploading a text-based PDF</li>
-              <li>• Avoid image-only or scanned resumes</li>
-              <li>• Use clear section headings (Experience, Skills, Education)</li>
-            </ul>
+          <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/[0.06] p-3 flex items-start gap-2">
+            <CheckCircle className="w-4 h-4 mt-0.5 shrink-0 text-emerald-400" />
+            <p className="text-sm text-foreground/80 leading-relaxed">
+              No significant weaknesses detected. Nice work!
+            </p>
           </div>
         )}
       </CardContent>
