@@ -76,6 +76,35 @@ const getScoreBg = (score: number) => {
   return "bg-red-500/20 border-red-500/30";
 };
 
+// Detect parser-error-style noise so it never reaches the user as feedback.
+const PARSER_NOISE_PATTERNS = [
+  /corrupt/i,
+  /binary/i,
+  /raw\s*stream/i,
+  /unreadable/i,
+  /unable to (parse|determine|extract|read)/i,
+  /could not (parse|extract|read|determine)/i,
+  /failed to (parse|extract|read)/i,
+  /parsing (error|failed|issue)/i,
+  /not a valid (pdf|document)/i,
+  /encoded/i,
+  /gibberish/i,
+  /image[- ]?based/i,
+  /scanned (pdf|document|resume)/i,
+  /ocr/i,
+  /no (readable|extractable) text/i,
+  /text extraction/i,
+  /\bpdf header\b/i,
+  /^%pdf/i,
+];
+
+const looksLikeParserNoise = (s: string) =>
+  !s || PARSER_NOISE_PATTERNS.some((re) => re.test(s));
+
+const cleanItems = (items: string[] = []) =>
+  items.map((s) => (s || "").trim()).filter((s) => s && !looksLikeParserNoise(s));
+
+
 const ResumeAnalyzer = () => {
   const { user } = useOutletContext<DashboardContext>();
   const { toast } = useToast();
