@@ -742,8 +742,8 @@ const ExperienceCard = ({ items }: { items: string[] }) => {
 };
 
 // Weaknesses: separate ATS weaknesses from parsing issues with a neutral fallback
-const WeaknessCard = ({ items }: { items: string[] }) => {
-  const hasData = items.length > 0;
+const WeaknessCard = ({ items, limited = false }: { items: string[]; limited?: boolean }) => {
+  const hasData = !limited && items.length > 0;
   return (
     <Card className="glass-card border-white/[0.08]">
       <CardHeader className="pb-3">
