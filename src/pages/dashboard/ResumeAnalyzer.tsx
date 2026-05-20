@@ -441,27 +441,61 @@ ${result.suggestions.map((s, i) => `  ${i + 1}. ${s}`).join("\n")}
           <AnimatePresence>
             {result && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-6">
+                {limitedAnalysis && (
+                  <div className="rounded-xl border border-amber-500/25 bg-amber-500/[0.06] p-4 flex items-start gap-3">
+                    <Info className="w-5 h-5 mt-0.5 shrink-0 text-amber-400" />
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-foreground">Limited analysis mode</p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        We couldn't extract enough readable text from this resume to score it accurately. Upload a text-based PDF (not a scan or image) and try again for a full ATS report.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Score Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <ScoreCard title="ATS Compatibility" score={result.ats_score} icon={<BarChart3 className="w-5 h-5" />} />
-                  <ScoreCard title="Job Match" score={result.job_match_score} icon={<Target className="w-5 h-5" />} />
+                  <ScoreCard
+                    title="ATS Compatibility"
+                    score={result.ats_score}
+                    icon={<BarChart3 className="w-5 h-5" />}
+                    unavailable={limitedAnalysis}
+                    unavailableLabel="Analysis unavailable"
+                    unavailableSub="Not enough readable resume content detected."
+                  />
+                  <ScoreCard
+                    title="Job Match"
+                    score={result.job_match_score}
+                    icon={<Target className="w-5 h-5" />}
+                    unavailable={limitedAnalysis}
+                    unavailableLabel="Unable to determine"
+                    unavailableSub="Resume text extraction is limited."
+                  />
                 </div>
 
                 {/* Skills */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <ListCard
                     title="Skills Detected"
-                    items={cleanItems(result.detected_skills)}
+                    items={limitedAnalysis ? [] : cleanItems(result.detected_skills)}
                     icon={<CheckCircle className="w-5 h-5 text-emerald-400" />}
                     badgeClass="bg-emerald-500/15 text-emerald-300 border-emerald-500/25"
-                    emptyMessage="No technical skills detected yet. Try a text-based resume for richer insights."
+                    emptyMessage={
+                      limitedAnalysis
+                        ? "Upload a clearer text-based resume to identify your skills."
+                        : "No technical skills detected yet. Try a text-based resume for richer insights."
+                    }
                   />
                   <ListCard
                     title="Missing Skills"
-                    items={cleanItems(result.missing_skills)}
-                    icon={<XCircle className="w-5 h-5 text-red-400" />}
+                    items={limitedAnalysis ? [] : cleanItems(result.missing_skills)}
+                    icon={limitedAnalysis ? <Info className="w-5 h-5 text-amber-400" /> : <XCircle className="w-5 h-5 text-red-400" />}
                     badgeClass="bg-red-500/15 text-red-300 border-red-500/25"
-                    emptyMessage="No critical skill gaps spotted for this role."
+                    emptyMessage={
+                      limitedAnalysis
+                        ? "Cannot determine missing skills until readable resume text is extracted."
+                        : "No critical skill gaps spotted for this role."
+                    }
                   />
                 </div>
 
@@ -469,46 +503,56 @@ ${result.suggestions.map((s, i) => `  ${i + 1}. ${s}`).join("\n")}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <ListCard
                     title="Missing Keywords"
-                    items={cleanItems(result.missing_keywords)}
+                    items={limitedAnalysis ? [] : cleanItems(result.missing_keywords)}
                     icon={<Search className="w-5 h-5 text-amber-400" />}
                     badgeClass="bg-amber-500/15 text-amber-300 border-amber-500/25"
-                    emptyMessage="Your resume already covers the key ATS keywords for this role."
+                    emptyMessage={
+                      limitedAnalysis
+                        ? "Keyword analysis will appear once readable resume text is detected."
+                        : "Your resume already covers the key ATS keywords for this role."
+                    }
                   />
-                  <ExperienceCard items={cleanItems(result.experience_gaps)} />
+                  <ExperienceCard items={limitedAnalysis ? [] : cleanItems(result.experience_gaps)} />
                 </div>
 
                 {/* Strengths & Weaknesses */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <ListCard
                     title="Strengths"
-                    items={cleanItems(result.strengths)}
-                    icon={<TrendingUp className="w-5 h-5 text-emerald-400" />}
+                    items={limitedAnalysis ? [] : cleanItems(result.strengths)}
+                    icon={limitedAnalysis ? <Info className="w-5 h-5 text-amber-400" /> : <TrendingUp className="w-5 h-5 text-emerald-400" />}
                     variant="list"
-                    emptyMessage="Upload a clearer, text-based resume to highlight your strengths."
+                    emptyMessage={
+                      limitedAnalysis
+                        ? "Upload a clearer text-based resume to identify strengths."
+                        : "Upload a clearer, text-based resume to highlight your strengths."
+                    }
                   />
-                  <WeaknessCard items={cleanItems(result.weaknesses)} />
+                  <WeaknessCard items={limitedAnalysis ? [] : cleanItems(result.weaknesses)} limited={limitedAnalysis} />
                 </div>
 
                 {/* Suggestions */}
-                <Card className="glass-card border-white/10">
-                  <CardHeader>
-                    <CardTitle className="text-foreground flex items-center gap-2"><Lightbulb className="w-5 h-5 text-amber-400" /> Improvement Suggestions</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {cleanItems(result.suggestions).length === 0 ? (
-                      <p className="text-sm text-muted-foreground">No suggestions available. Try re-uploading a text-based PDF for tailored recommendations.</p>
-                    ) : (
-                      <ol className="space-y-3">
-                        {cleanItems(result.suggestions).map((s, i) => (
-                          <li key={i} className="flex gap-3">
-                            <span className="w-6 h-6 rounded-full bg-accent/15 text-accent text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
-                            <span className="text-sm text-foreground/80 leading-relaxed">{s}</span>
-                          </li>
-                        ))}
-                      </ol>
-                    )}
-                  </CardContent>
-                </Card>
+                {!limitedAnalysis && (
+                  <Card className="glass-card border-white/10">
+                    <CardHeader>
+                      <CardTitle className="text-foreground flex items-center gap-2"><Lightbulb className="w-5 h-5 text-amber-400" /> Improvement Suggestions</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {cleanItems(result.suggestions).length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No suggestions available yet. Try re-uploading a text-based PDF for tailored recommendations.</p>
+                      ) : (
+                        <ol className="space-y-3">
+                          {cleanItems(result.suggestions).map((s, i) => (
+                            <li key={i} className="flex gap-3">
+                              <span className="w-6 h-6 rounded-full bg-accent/15 text-accent text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
+                              <span className="text-sm text-foreground/80 leading-relaxed">{s}</span>
+                            </li>
+                          ))}
+                        </ol>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
 
 
                 {/* Download */}
