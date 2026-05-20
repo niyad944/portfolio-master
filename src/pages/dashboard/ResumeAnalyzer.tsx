@@ -296,7 +296,7 @@ const ResumeAnalyzer = () => {
   };
 
   const handleViewRecord = (record: AnalysisRecord) => {
-    setResult({
+    const r: AnalysisResult = {
       ats_score: record.ats_score || 0,
       job_match_score: record.job_match_score || 0,
       detected_skills: record.detected_skills,
@@ -306,7 +306,9 @@ const ResumeAnalyzer = () => {
       weaknesses: record.weaknesses,
       suggestions: record.suggestions,
       experience_gaps: record.experience_gaps,
-    });
+    };
+    setResult(r);
+    setLimitedAnalysis(isAnalysisLimited(r));
     setJobRole(record.job_role);
     setActiveTab("analyze");
   };
