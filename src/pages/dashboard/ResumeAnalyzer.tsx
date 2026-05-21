@@ -331,6 +331,20 @@ const ResumeAnalyzer = () => {
       const rawText = await extractTextFromFile(file);
       const resumeText = normalizeExtractedText(rawText);
       const unreliable = isTextUnreliable(resumeText);
+      console.log("[ATS] extraction summary", {
+        rawLen: rawText?.length || 0,
+        normalizedLen: resumeText?.length || 0,
+        words: (resumeText.match(/[A-Za-z]{3,}/g) || []).length,
+        unreliable,
+        preview: resumeText.slice(0, 200),
+      });
+      if (unreliable) {
+        console.warn("[ATS] limited_analysis triggered. Reason:",
+          !rawText ? "empty raw extraction"
+            : !resumeText ? "empty after normalization"
+            : !/[A-Za-z]{3,}/.test(resumeText) ? "no readable alphabetic words"
+            : "raw PDF bytes leaked through");
+      }
 
       if (unreliable) {
         // Enter limited-analysis mode: skip AI, show neutral states
