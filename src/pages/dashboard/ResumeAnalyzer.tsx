@@ -119,19 +119,19 @@ const normalizeExtractedText = (text: string): string => {
   return s.trim();
 };
 
-// Only flag text as unreliable when it's truly missing/empty/unreadable.
-// Do NOT penalize short resumes, odd formatting, or minor encoding noise.
+// Only flag when text is truly missing/empty/unreadable.
+// Accepts short resumes, odd whitespace, line breaks, encoding noise.
 const isTextUnreliable = (text: string): boolean => {
-  if (!text) return true;
-  const trimmed = text.trim();
+  if (text === null || text === undefined) return true;
+  const trimmed = String(text).trim();
   if (trimmed.length === 0) return true;
-  // Raw PDF binary leaked through (extraction failed completely)
-  if (/^%PDF-/.test(trimmed) && !/[A-Za-z]{4,}\s+[A-Za-z]{4,}/.test(trimmed.slice(0, 4000))) {
-    return true;
+  // Must contain at least one readable alphabetic word
+  if (!/[A-Za-z]{3,}/.test(trimmed)) return true;
+  // Raw PDF binary leaked through (extraction completely failed)
+  if (/^%PDF-/.test(trimmed)) {
+    const alpha = (trimmed.match(/[A-Za-z]/g) || []).length;
+    if (alpha / trimmed.length < 0.2) return true;
   }
-  // Need at least a handful of readable words anywhere in the doc
-  const words = trimmed.match(/[A-Za-z]{2,}/g) || [];
-  if (words.length < 10) return true;
   return false;
 };
 
