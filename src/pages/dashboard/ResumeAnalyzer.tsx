@@ -119,19 +119,19 @@ const normalizeExtractedText = (text: string): string => {
   return s.trim();
 };
 
-// Only flag text as unreliable when it's truly missing/empty/unreadable.
-// Do NOT penalize short resumes, odd formatting, or minor encoding noise.
+// Only flag when text is truly missing/empty/unreadable.
+// Accepts short resumes, odd whitespace, line breaks, encoding noise.
 const isTextUnreliable = (text: string): boolean => {
-  if (!text) return true;
-  const trimmed = text.trim();
+  if (text === null || text === undefined) return true;
+  const trimmed = String(text).trim();
   if (trimmed.length === 0) return true;
-  // Raw PDF binary leaked through (extraction failed completely)
-  if (/^%PDF-/.test(trimmed) && !/[A-Za-z]{4,}\s+[A-Za-z]{4,}/.test(trimmed.slice(0, 4000))) {
-    return true;
+  // Must contain at least one readable alphabetic word
+  if (!/[A-Za-z]{3,}/.test(trimmed)) return true;
+  // Raw PDF binary leaked through (extraction completely failed)
+  if (/^%PDF-/.test(trimmed)) {
+    const alpha = (trimmed.match(/[A-Za-z]/g) || []).length;
+    if (alpha / trimmed.length < 0.2) return true;
   }
-  // Need at least a handful of readable words anywhere in the doc
-  const words = trimmed.match(/[A-Za-z]{2,}/g) || [];
-  if (words.length < 10) return true;
   return false;
 };
 
@@ -219,35 +219,63 @@ const ResumeAnalyzer = () => {
     if (type === "application/pdf" || name.endsWith(".pdf")) {
       try {
         const pdfjs: any = await import("pdfjs-dist");
-        // Worker setup (Vite-friendly)
+        // Worker setup (Vite-friendly with fallbacks)
+        let workerConfigured = false;
         try {
           const workerSrc = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
           pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
-        } catch {
-          // Fallback: disable worker
-          pdfjs.GlobalWorkerOptions.workerSrc = "";
+          workerConfigured = true;
+        } catch (w1) {
+          console.warn("[PDF] primary worker import failed, trying legacy:", w1);
+          try {
+            const workerSrc = (await import("pdfjs-dist/build/pdf.worker.mjs?url")).default;
+            pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
+            workerConfigured = true;
+          } catch (w2) {
+            console.warn("[PDF] legacy worker import failed, using fake worker:", w2);
+          }
         }
         const arrayBuffer = await f.arrayBuffer();
-        const pdf = await pdfjs.getDocument({
+        const loadingTask = pdfjs.getDocument({
           data: arrayBuffer,
           isEvalSupported: false,
           useWorkerFetch: false,
           disableAutoFetch: true,
           disableStream: true,
-        }).promise;
+          ...(workerConfigured ? {} : { disableWorker: true }),
+        });
+        const pdf = await loadingTask.promise;
+        console.log(`[PDF] loaded ${pdf.numPages} pages`);
 
+        const Y_TOL = 3;
         let fullText = "";
         for (let i = 1; i <= pdf.numPages; i++) {
           const page = await pdf.getPage(i);
           const content = await page.getTextContent();
-          const pageText = content.items
-            .map((it: any) => (typeof it.str === "string" ? it.str : ""))
-            .join(" ");
+          // Group items by Y coordinate to preserve line structure
+          const lineMap = new Map<number, Array<{ str: string; x: number }>>();
+          for (const item of content.items as any[]) {
+            const str = typeof item.str === "string" ? item.str : "";
+            if (!str) continue;
+            const tr = item.transform || [];
+            const y = Math.round((tr[5] || 0) / Y_TOL) * Y_TOL;
+            const x = tr[4] || 0;
+            if (!lineMap.has(y)) lineMap.set(y, []);
+            lineMap.get(y)!.push({ str, x });
+          }
+          const pageText = Array.from(lineMap.entries())
+            .sort((a, b) => b[0] - a[0]) // top to bottom
+            .map(([, items]) => {
+              items.sort((a, b) => a.x - b.x);
+              return items.map((it) => it.str).join(" ");
+            })
+            .join("\n");
           fullText += pageText + "\n\n";
         }
+        console.log(`[PDF] extracted ${fullText.length} chars`);
         return fullText;
       } catch (err) {
-        console.error("PDF extraction failed:", err);
+        console.error("[PDF] extraction failed:", err);
         return "";
       }
     }
@@ -303,6 +331,20 @@ const ResumeAnalyzer = () => {
       const rawText = await extractTextFromFile(file);
       const resumeText = normalizeExtractedText(rawText);
       const unreliable = isTextUnreliable(resumeText);
+      console.log("[ATS] extraction summary", {
+        rawLen: rawText?.length || 0,
+        normalizedLen: resumeText?.length || 0,
+        words: (resumeText.match(/[A-Za-z]{3,}/g) || []).length,
+        unreliable,
+        preview: resumeText.slice(0, 200),
+      });
+      if (unreliable) {
+        console.warn("[ATS] limited_analysis triggered. Reason:",
+          !rawText ? "empty raw extraction"
+            : !resumeText ? "empty after normalization"
+            : !/[A-Za-z]{3,}/.test(resumeText) ? "no readable alphabetic words"
+            : "raw PDF bytes leaked through");
+      }
 
       if (unreliable) {
         // Enter limited-analysis mode: skip AI, show neutral states
