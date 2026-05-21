@@ -191,7 +191,73 @@ const ResumeAnalyzer = () => {
   };
 
   const extractTextFromFile = async (f: File): Promise<string> => {
-    return await f.text();
+    const name = f.name.toLowerCase();
+    const type = f.type;
+
+    // Plain text
+    if (type === "text/plain" || name.endsWith(".txt")) {
+      return await f.text();
+    }
+
+    // DOCX via mammoth
+    if (
+      type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+      name.endsWith(".docx")
+    ) {
+      try {
+        const mammoth = await import("mammoth");
+        const arrayBuffer = await f.arrayBuffer();
+        const { value } = await mammoth.extractRawText({ arrayBuffer });
+        return value || "";
+      } catch (err) {
+        console.error("DOCX extraction failed:", err);
+        return "";
+      }
+    }
+
+    // PDF via pdfjs-dist (native text extraction)
+    if (type === "application/pdf" || name.endsWith(".pdf")) {
+      try {
+        const pdfjs: any = await import("pdfjs-dist");
+        // Worker setup (Vite-friendly)
+        try {
+          const workerSrc = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
+          pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
+        } catch {
+          // Fallback: disable worker
+          pdfjs.GlobalWorkerOptions.workerSrc = "";
+        }
+        const arrayBuffer = await f.arrayBuffer();
+        const pdf = await pdfjs.getDocument({
+          data: arrayBuffer,
+          isEvalSupported: false,
+          useWorkerFetch: false,
+          disableAutoFetch: true,
+          disableStream: true,
+        }).promise;
+
+        let fullText = "";
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          const pageText = content.items
+            .map((it: any) => (typeof it.str === "string" ? it.str : ""))
+            .join(" ");
+          fullText += pageText + "\n\n";
+        }
+        return fullText;
+      } catch (err) {
+        console.error("PDF extraction failed:", err);
+        return "";
+      }
+    }
+
+    // Fallback
+    try {
+      return await f.text();
+    } catch {
+      return "";
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
