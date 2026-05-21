@@ -60,7 +60,13 @@ const ShaderAnimation = ({ className = "" }: ShaderAnimationProps) => {
     const scene = new THREE.Scene();
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: false, alpha: false });
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: false, alpha: false, powerPreference: "low-power", failIfMajorPerformanceCaveat: false });
+    } catch (err) {
+      console.warn("WebGL unavailable, skipping shader animation:", err);
+      return;
+    }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.setSize(container.clientWidth, container.clientHeight);
     container.appendChild(renderer.domElement);
