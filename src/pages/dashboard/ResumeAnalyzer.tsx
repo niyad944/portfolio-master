@@ -300,7 +300,8 @@ const ResumeAnalyzer = () => {
       if (uploadError) throw new Error("Failed to upload resume: " + uploadError.message);
 
       // Extract text & assess quality
-      const resumeText = await extractTextFromFile(file);
+      const rawText = await extractTextFromFile(file);
+      const resumeText = normalizeExtractedText(rawText);
       const unreliable = isTextUnreliable(resumeText);
 
       if (unreliable) {
