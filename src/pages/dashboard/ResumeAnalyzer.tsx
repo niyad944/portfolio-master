@@ -104,21 +104,34 @@ const looksLikeParserNoise = (s: string) =>
 const cleanItems = (items: string[] = []) =>
   items.map((s) => (s || "").trim()).filter((s) => s && !looksLikeParserNoise(s));
 
-// Heuristic: decide if extracted text is reliable enough to analyze.
-// Returns true when text is missing, too short, or mostly non-printable (binary/encoded).
+// Normalize extracted text: strip control chars, collapse whitespace, fix line breaks.
+const normalizeExtractedText = (text: string): string => {
+  if (!text) return "";
+  let s = text;
+  // Remove zero-width / invisible / control characters (keep \n and \t)
+  s = s.replace(/[\u0000-\u0008\u000B-\u001F\u007F\u200B-\u200F\u2060-\u206F\uFEFF]/g, "");
+  // Normalize line breaks
+  s = s.replace(/\r\n?/g, "\n");
+  // Collapse runs of spaces/tabs
+  s = s.replace(/[ \t]+/g, " ");
+  // Collapse 3+ newlines to 2
+  s = s.replace(/\n{3,}/g, "\n\n");
+  return s.trim();
+};
+
+// Only flag text as unreliable when it's truly missing/empty/unreadable.
+// Do NOT penalize short resumes, odd formatting, or minor encoding noise.
 const isTextUnreliable = (text: string): boolean => {
   if (!text) return true;
   const trimmed = text.trim();
-  if (trimmed.length < 200) return true;
-  // Strip control chars; measure ratio of readable ASCII/whitespace
-  const printable = trimmed.replace(/[^\x20-\x7E\s]/g, "");
-  const ratio = printable.length / trimmed.length;
-  if (ratio < 0.7) return true;
-  // Word-like tokens: needs a reasonable amount of real words
-  const words = printable.match(/[A-Za-z]{3,}/g) || [];
-  if (words.length < 40) return true;
-  // PDF binary signature with little decoded text
-  if (/^%PDF/.test(trimmed) && words.length < 120) return true;
+  if (trimmed.length === 0) return true;
+  // Raw PDF binary leaked through (extraction failed completely)
+  if (/^%PDF-/.test(trimmed) && !/[A-Za-z]{4,}\s+[A-Za-z]{4,}/.test(trimmed.slice(0, 4000))) {
+    return true;
+  }
+  // Need at least a handful of readable words anywhere in the doc
+  const words = trimmed.match(/[A-Za-z]{2,}/g) || [];
+  if (words.length < 10) return true;
   return false;
 };
 
