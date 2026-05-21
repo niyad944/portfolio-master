@@ -219,35 +219,63 @@ const ResumeAnalyzer = () => {
     if (type === "application/pdf" || name.endsWith(".pdf")) {
       try {
         const pdfjs: any = await import("pdfjs-dist");
-        // Worker setup (Vite-friendly)
+        // Worker setup (Vite-friendly with fallbacks)
+        let workerConfigured = false;
         try {
           const workerSrc = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
           pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
-        } catch {
-          // Fallback: disable worker
-          pdfjs.GlobalWorkerOptions.workerSrc = "";
+          workerConfigured = true;
+        } catch (w1) {
+          console.warn("[PDF] primary worker import failed, trying legacy:", w1);
+          try {
+            const workerSrc = (await import("pdfjs-dist/build/pdf.worker.mjs?url")).default;
+            pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
+            workerConfigured = true;
+          } catch (w2) {
+            console.warn("[PDF] legacy worker import failed, using fake worker:", w2);
+          }
         }
         const arrayBuffer = await f.arrayBuffer();
-        const pdf = await pdfjs.getDocument({
+        const loadingTask = pdfjs.getDocument({
           data: arrayBuffer,
           isEvalSupported: false,
           useWorkerFetch: false,
           disableAutoFetch: true,
           disableStream: true,
-        }).promise;
+          ...(workerConfigured ? {} : { disableWorker: true }),
+        });
+        const pdf = await loadingTask.promise;
+        console.log(`[PDF] loaded ${pdf.numPages} pages`);
 
+        const Y_TOL = 3;
         let fullText = "";
         for (let i = 1; i <= pdf.numPages; i++) {
           const page = await pdf.getPage(i);
           const content = await page.getTextContent();
-          const pageText = content.items
-            .map((it: any) => (typeof it.str === "string" ? it.str : ""))
-            .join(" ");
+          // Group items by Y coordinate to preserve line structure
+          const lineMap = new Map<number, Array<{ str: string; x: number }>>();
+          for (const item of content.items as any[]) {
+            const str = typeof item.str === "string" ? item.str : "";
+            if (!str) continue;
+            const tr = item.transform || [];
+            const y = Math.round((tr[5] || 0) / Y_TOL) * Y_TOL;
+            const x = tr[4] || 0;
+            if (!lineMap.has(y)) lineMap.set(y, []);
+            lineMap.get(y)!.push({ str, x });
+          }
+          const pageText = Array.from(lineMap.entries())
+            .sort((a, b) => b[0] - a[0]) // top to bottom
+            .map(([, items]) => {
+              items.sort((a, b) => a.x - b.x);
+              return items.map((it) => it.str).join(" ");
+            })
+            .join("\n");
           fullText += pageText + "\n\n";
         }
+        console.log(`[PDF] extracted ${fullText.length} chars`);
         return fullText;
       } catch (err) {
-        console.error("PDF extraction failed:", err);
+        console.error("[PDF] extraction failed:", err);
         return "";
       }
     }
