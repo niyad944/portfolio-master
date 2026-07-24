@@ -272,7 +272,13 @@ export const AuroraBackground = () => {
         className="absolute bottom-0 left-1/4 h-[500px] w-[500px] rounded-full bg-[hsl(var(--pf-cyan))]/20 blur-[150px]"
       />
       {/* Noise */}
-      <div className="absolute inset-0 opacity-[0.035] mix-blend-overlay [background-image:url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>\")]" />
+      <div
+        className="absolute inset-0 opacity-[0.035] mix-blend-overlay"
+        style={{
+          backgroundImage:
+            "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>\")",
+        }}
+      />
     </div>
   );
 };
