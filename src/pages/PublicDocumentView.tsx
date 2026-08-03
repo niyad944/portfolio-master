@@ -32,16 +32,27 @@ const PublicDocumentView = () => {
 
   const fetchDocument = async () => {
     setLoading(true);
+    setNotFound(false);
+
+    // Public route: validate params before querying, no auth/session dependency.
+    const cleanSlug = decodeURIComponent(slug ?? "").trim().toLowerCase();
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(docId ?? "");
+    if (!/^[a-z0-9-]{1,60}$/.test(cleanSlug) || !isUuid) {
+      setNotFound(true);
+      setLoading(false);
+      return;
+    }
 
     // Get profile by slug
     const { data: profileData, error: profileError } = await supabase
       .from("profiles")
       .select("user_id, full_name, is_public")
-      .eq("public_slug", slug)
+      .eq("public_slug", cleanSlug)
       .eq("is_public", true)
-      .single();
+      .maybeSingle();
 
     if (profileError || !profileData) {
+      if (profileError) console.error("Document profile load failed:", profileError.message);
       setNotFound(true);
       setLoading(false);
       return;
@@ -55,9 +66,10 @@ const PublicDocumentView = () => {
       .select("*")
       .eq("id", docId)
       .eq("user_id", profileData.user_id)
-      .single();
+      .maybeSingle();
 
     if (certError || !certData) {
+      if (certError) console.error("Document load failed:", certError.message);
       setNotFound(true);
       setLoading(false);
       return;

@@ -39,6 +39,9 @@ const PublicPortfolioSettings = ({ userId, onUpdate }: PublicPortfolioSettingsPr
 
   const [isPublic, setIsPublic] = useState(false);
   const [publicSlug, setPublicSlug] = useState("");
+  // The slug currently persisted in the database — share links are built from this only.
+  const [savedSlug, setSavedSlug] = useState("");
+  const [savedIsPublic, setSavedIsPublic] = useState(false);
   const [visibleSections, setVisibleSections] = useState<VisibleSections>({
     about: true,
     skills: true,
@@ -62,7 +65,9 @@ const PublicPortfolioSettings = ({ userId, onUpdate }: PublicPortfolioSettingsPr
 
     if (data) {
       setIsPublic(data.is_public || false);
+      setSavedIsPublic(data.is_public || false);
       setPublicSlug(data.public_slug || "");
+      setSavedSlug(data.is_public ? data.public_slug || "" : "");
       if (data.visible_sections && typeof data.visible_sections === "object") {
         const sections = data.visible_sections as Record<string, unknown>;
         setVisibleSections({
@@ -78,10 +83,17 @@ const PublicPortfolioSettings = ({ userId, onUpdate }: PublicPortfolioSettingsPr
     setLoading(false);
   };
 
+  // Same normalization used when persisting, so what the user sees is what gets stored.
+  const normalizeSlug = (value: string) =>
+    value.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").slice(0, 60);
+
   const generateSlug = () => {
     const random = Math.random().toString(36).substring(2, 8);
     setPublicSlug(`portfolio-${random}`);
   };
+
+  const shareUrl = savedSlug ? `${window.location.origin}/p/${savedSlug}` : "";
+  const hasUnsavedSlug = normalizeSlug(publicSlug) !== savedSlug || isPublic !== savedIsPublic;
 
   const saveSettings = async () => {
     if (isPublic && !publicSlug.trim()) {
@@ -94,6 +106,7 @@ const PublicPortfolioSettings = ({ userId, onUpdate }: PublicPortfolioSettingsPr
     }
 
     setSaving(true);
+    const nextSlug = isPublic ? normalizeSlug(publicSlug) : null;
     const sectionsData: Record<string, boolean> = {
       about: visibleSections.about,
       skills: visibleSections.skills,
@@ -107,7 +120,7 @@ const PublicPortfolioSettings = ({ userId, onUpdate }: PublicPortfolioSettingsPr
       .from("profiles")
       .update({
         is_public: isPublic,
-        public_slug: isPublic ? publicSlug.toLowerCase().replace(/[^a-z0-9-]/g, "-") : null,
+        public_slug: nextSlug,
         visible_sections: sectionsData
       })
       .eq("user_id", userId);
@@ -127,14 +140,17 @@ const PublicPortfolioSettings = ({ userId, onUpdate }: PublicPortfolioSettingsPr
           ? "Your portfolio is now public!"
           : "Your portfolio is now private."
       });
+      setSavedSlug(nextSlug || "");
+      setSavedIsPublic(isPublic);
+      if (nextSlug) setPublicSlug(nextSlug);
       onUpdate?.();
     }
     setSaving(false);
   };
 
   const copyLink = () => {
-    const url = `${window.location.origin}/p/${publicSlug}`;
-    navigator.clipboard.writeText(url);
+    if (!shareUrl) return;
+    navigator.clipboard.writeText(shareUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
     toast({ title: "Link copied!", description: "Share it with anyone" });
@@ -196,7 +212,7 @@ const PublicPortfolioSettings = ({ userId, onUpdate }: PublicPortfolioSettingsPr
               </span>
               <Input
                 value={publicSlug}
-                onChange={(e) => setPublicSlug(e.target.value)}
+                onChange={(e) => setPublicSlug(normalizeSlug(e.target.value))}
                 placeholder="your-unique-url"
                 className="border-0 bg-transparent focus-visible:ring-0"
               />
@@ -204,19 +220,26 @@ const PublicPortfolioSettings = ({ userId, onUpdate }: PublicPortfolioSettingsPr
             <Button variant="outline" onClick={generateSlug}>
               Generate
             </Button>
-            {publicSlug && (
+            {shareUrl && (
               <>
                 <Button variant="outline" onClick={copyLink}>
                   {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                 </Button>
                 <Button variant="outline" asChild>
-                  <a href={`/p/${publicSlug}`} target="_blank" rel="noopener noreferrer">
+                  <a href={shareUrl} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="w-4 h-4" />
                   </a>
                 </Button>
               </>
             )}
           </div>
+          <p className="text-xs text-muted-foreground">
+            {hasUnsavedSlug
+              ? "Save your settings to activate this link — unsaved links won't open for other people."
+              : shareUrl
+                ? `Live link: ${shareUrl}`
+                : "Save your settings to generate a shareable link."}
+          </p>
         </div>
       )}
 

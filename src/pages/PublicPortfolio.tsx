@@ -35,9 +35,22 @@ const PublicPortfolio = () => {
   });
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
       setLoading(true);
-      const { data: p, error } = await supabase.from("profiles").select("*").eq("public_slug", slug).eq("is_public", true).single();
+      setNotFound(false);
+      // Public route: never depends on session/auth state. Validate the param first.
+      const cleanSlug = decodeURIComponent(slug ?? "").trim().toLowerCase();
+      if (!cleanSlug || !/^[a-z0-9-]{1,60}$/.test(cleanSlug)) {
+        if (!cancelled) { setNotFound(true); setLoading(false); }
+        return;
+      }
+      const { data: p, error } = await supabase
+        .from("profiles").select("*")
+        .eq("public_slug", cleanSlug).eq("is_public", true)
+        .maybeSingle();
+      if (cancelled) return;
+      if (error) console.error("Portfolio load failed:", error.message);
       if (error || !p) { setNotFound(true); setLoading(false); return; }
       setProfile(p);
       if (p.visible_sections && typeof p.visible_sections === "object") {
@@ -55,6 +68,7 @@ const PublicPortfolio = () => {
         supabase.from("projects").select("*").eq("user_id", uid).order("is_featured", { ascending: false }),
         supabase.from("certificates").select("*").eq("user_id", uid).order("created_at", { ascending: false }),
       ]);
+      if (cancelled) return;
       if (sk.data) setSkills(sk.data);
       if (ed.data) setEducation(ed.data);
       if (ac.data) setAchievements(ac.data);
@@ -62,6 +76,7 @@ const PublicPortfolio = () => {
       if (ce.data) setCertificates(ce.data);
       setLoading(false);
     })();
+    return () => { cancelled = true; };
   }, [slug]);
 
   const handleDownload = async () => {
