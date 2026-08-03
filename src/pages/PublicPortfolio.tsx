@@ -80,27 +80,36 @@ const PublicPortfolio = () => {
   }, [slug]);
 
   const handleDownload = async () => {
-    if (!rootRef.current) return;
     setExporting(true);
     try {
-      const html2canvas = (await import("html2canvas-pro")).default;
-      const { jsPDF } = await import("jspdf");
-      const canvas = await html2canvas(rootRef.current, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: "#05070d", logging: false });
-      const img = canvas.toDataURL("image/jpeg", 0.95);
-      const pdfW = 210, pdfH = 297;
-      const ratio = pdfW / canvas.width;
-      const scaled = canvas.height * ratio;
-      const pdf = new jsPDF("p", "mm", "a4");
-      let pos = 0;
-      while (pos < scaled) {
-        if (pos > 0) pdf.addPage();
-        pdf.addImage(img, "JPEG", 0, -pos, pdfW, scaled);
-        pos += pdfH;
-      }
-      pdf.save(`${profile?.full_name || "portfolio"}.pdf`);
+      const { printResume } = await import("@/components/resume/ResumePrint");
+      await printResume("professional", {
+        profile: {
+          full_name: profile?.full_name || "",
+          bio: profile?.bio || "",
+          email: profile?.email || profile?.contact_email || "",
+          phone: profile?.phone || "",
+          location: profile?.location || "",
+          linkedin_url: profile?.linkedin_url || "",
+          github_url: profile?.github_url || "",
+          portfolio_url: profile?.portfolio_url || "",
+          profile_photo_url: profile?.profile_photo_url || "",
+        },
+        skills: skills.map((s: any) => ({ name: s.name, proficiency_level: s.proficiency_level, category: s.category })),
+        education: education.map((e: any) => ({
+          degree: e.degree, institution: e.institution, field_of_study: e.field_of_study,
+          start_date: e.start_date, end_date: e.end_date, grade: e.grade,
+        })),
+        projects: projects.map((p: any) => ({ title: p.title, description: p.description, technologies: p.technologies || [] })),
+        achievements: [
+          ...achievements.map((a: any) => ({ title: a.title, description: a.description, issuer: a.issuer })),
+          ...certificates.map((c: any) => ({ title: c.title, description: c.description, issuer: c.issuer })),
+        ],
+      });
     } catch (e) { console.error("PDF export failed", e); }
     finally { setExporting(false); }
   };
+
 
   if (loading) {
     return (

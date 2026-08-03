@@ -47,16 +47,21 @@ const icons = {
 
 // Shared print CSS rules for all templates
 const printCSS = `
-  @page { margin: 0; size: A4; }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  .sec, .item { page-break-inside: avoid; }
-  .sec { break-inside: avoid; }
-  .item { break-inside: avoid; }
+  @page { margin: 0; size: A4 portrait; }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { width: 210mm; background: #fff; }
+  img { image-rendering: -webkit-optimize-contrast; }
+  a { text-decoration: none; }
+  .sec, .item, .left-sec { page-break-inside: avoid; break-inside: avoid; }
+  .sec-title, .left-sec-title, .item-title { page-break-after: avoid; break-after: avoid; }
+  .item-header { page-break-inside: avoid; break-inside: avoid; }
   @media print {
-    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; margin: 0; }
     .page { min-height: auto; }
+    .left { background-attachment: scroll; }
   }
 `;
+
 
 const avatarCircle = (name: string, bgColor: string, textColor: string, photoUrl?: string) => {
   if (photoUrl) {
