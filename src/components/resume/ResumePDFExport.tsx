@@ -97,7 +97,7 @@ const ResumePDFExport = ({ content, templateKey = "professional", onGenerated }:
         ) : (
           <Download className="w-4 h-4 mr-2" />
         )}
-        {exporting ? "Generating PDF..." : "Download as PDF"}
+        {exporting ? "Preparing PDF..." : "Download as PDF"}
       </Button>
     </div>
   );
