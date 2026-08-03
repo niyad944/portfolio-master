@@ -8,8 +8,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { getResumeHTML } from "./resumeTemplates";
+import { printResume } from "./ResumePrint";
 import ResumePreview from "./ResumePreview";
+
 
 interface ResumeContent {
   profile: {
