@@ -99,6 +99,7 @@ const Certificates = () => {
   const [sdgTags, setSdgTags] = useState<string[]>([]);
   const [sdgReasons, setSdgReasons] = useState<Record<string, string>>({});
   const [detectingSdgs, setDetectingSdgs] = useState(false);
+  const [autoDetectId, setAutoDetectId] = useState<string | null>(null);
 
   // AI analysis state
   const [analyzingId, setAnalyzingId] = useState<string | null>(null);
@@ -122,6 +123,80 @@ const Certificates = () => {
 
     if (data) setCertificates(data as unknown as Certificate[]);
     setLoading(false);
+  };
+
+  /**
+   * Ask the backend to classify a certificate against the 17 UN SDGs.
+   * Without `cert` it fills the open form; with `cert` it saves onto that record.
+   */
+  const detectSdgs = async (cert?: Certificate) => {
+    const payload = cert
+      ? {
+          title: cert.name,
+          organization: cert.issuing_organization,
+          description: cert.description,
+          certificateType: cert.type,
+          filePath: cert.file_path,
+        }
+      : {
+          title: newCert.name,
+          organization: newCert.issuing_organization,
+          description: newCert.description,
+          certificateType: newCert.type,
+          filePath: editingCert?.file_path ?? null,
+        };
+
+    if (!payload.title?.trim() && !payload.description?.trim() && !payload.filePath) {
+      toast({
+        title: "Add some details first",
+        description: "Enter a certificate name or upload the file so we can analyse it.",
+      });
+      return;
+    }
+
+    cert ? setAutoDetectId(cert.id) : setDetectingSdgs(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("detect-sdgs", { body: payload });
+      if (error) throw error;
+      const detected: { label: string; reason?: string }[] = data?.sdgs || [];
+      if (detected.length === 0) {
+        toast({
+          title: "No clear SDG match",
+          description: "We couldn't confidently link this certificate to an SDG — you can add one manually.",
+        });
+        return;
+      }
+
+      const labels = normalizeSdgList(detected.map((d) => d.label));
+      const reasons: Record<string, string> = {};
+      detected.forEach((d) => {
+        if (d.reason) reasons[d.label] = d.reason;
+      });
+
+      if (cert) {
+        // Merge with existing tags so manual selections are never overwritten.
+        const merged = normalizeSdgList([...(cert.sdg_goals || []), ...labels]);
+        const { error: updateError } = await supabase
+          .from("certificates")
+          .update({ sdg_goals: merged })
+          .eq("id", cert.id);
+        if (updateError) throw updateError;
+        setCertificates((prev) => prev.map((c) => (c.id === cert.id ? { ...c, sdg_goals: merged } : c)));
+      } else {
+        setSdgTags((prev) => normalizeSdgList([...prev, ...labels]));
+        setSdgReasons((prev) => ({ ...prev, ...reasons }));
+      }
+
+      toast({ title: "SDGs detected", description: labels.join(", ") });
+    } catch (error: any) {
+      toast({
+        title: "Couldn't detect SDGs",
+        description: error?.message || "Please try again in a moment.",
+        variant: "destructive",
+      });
+    } finally {
+      cert ? setAutoDetectId(null) : setDetectingSdgs(false);
+    }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
