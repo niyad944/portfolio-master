@@ -21,6 +21,7 @@ import {
   BookOpen,
   Edit2,
   ImageIcon,
+  Wand2,
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -32,6 +33,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { capitalizeProper } from "@/lib/capitalizeProper";
+import { SDG_LABELS, normalizeSdgList } from "@/lib/sdgs";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface DashboardContext {
@@ -72,25 +74,6 @@ const certificateTypes = [
   { value: "other", label: "Other" },
 ];
 
-const SDG_OPTIONS = [
-  "SDG 1: No Poverty",
-  "SDG 2: Zero Hunger",
-  "SDG 3: Good Health & Well-Being",
-  "SDG 4: Quality Education",
-  "SDG 5: Gender Equality",
-  "SDG 6: Clean Water & Sanitation",
-  "SDG 7: Affordable & Clean Energy",
-  "SDG 8: Decent Work & Economic Growth",
-  "SDG 9: Industry, Innovation & Infrastructure",
-  "SDG 10: Reduced Inequalities",
-  "SDG 11: Sustainable Cities & Communities",
-  "SDG 12: Responsible Consumption & Production",
-  "SDG 13: Climate Action",
-  "SDG 14: Life Below Water",
-  "SDG 15: Life on Land",
-  "SDG 16: Peace, Justice & Strong Institutions",
-  "SDG 17: Partnerships for the Goals",
-];
 
 const Certificates = () => {
   const { user } = useOutletContext<DashboardContext>();
@@ -108,10 +91,15 @@ const Certificates = () => {
     issuing_organization: "",
     issue_date: "",
     description: "",
-    sdg_goals: "",
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  // SDG tags (AI-detected, user-editable)
+  const [sdgTags, setSdgTags] = useState<string[]>([]);
+  const [sdgReasons, setSdgReasons] = useState<Record<string, string>>({});
+  const [detectingSdgs, setDetectingSdgs] = useState(false);
+  const [autoDetectId, setAutoDetectId] = useState<string | null>(null);
 
   // AI analysis state
   const [analyzingId, setAnalyzingId] = useState<string | null>(null);
@@ -137,6 +125,80 @@ const Certificates = () => {
     setLoading(false);
   };
 
+  /**
+   * Ask the backend to classify a certificate against the 17 UN SDGs.
+   * Without `cert` it fills the open form; with `cert` it saves onto that record.
+   */
+  const detectSdgs = async (cert?: Certificate) => {
+    const payload = cert
+      ? {
+          title: cert.name,
+          organization: cert.issuing_organization,
+          description: cert.description,
+          certificateType: cert.type,
+          filePath: cert.file_path,
+        }
+      : {
+          title: newCert.name,
+          organization: newCert.issuing_organization,
+          description: newCert.description,
+          certificateType: newCert.type,
+          filePath: editingCert?.file_path ?? null,
+        };
+
+    if (!payload.title?.trim() && !payload.description?.trim() && !payload.filePath) {
+      toast({
+        title: "Add some details first",
+        description: "Enter a certificate name or upload the file so we can analyse it.",
+      });
+      return;
+    }
+
+    cert ? setAutoDetectId(cert.id) : setDetectingSdgs(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("detect-sdgs", { body: payload });
+      if (error) throw error;
+      const detected: { label: string; reason?: string }[] = data?.sdgs || [];
+      if (detected.length === 0) {
+        toast({
+          title: "No clear SDG match",
+          description: "We couldn't confidently link this certificate to an SDG — you can add one manually.",
+        });
+        return;
+      }
+
+      const labels = normalizeSdgList(detected.map((d) => d.label));
+      const reasons: Record<string, string> = {};
+      detected.forEach((d) => {
+        if (d.reason) reasons[d.label] = d.reason;
+      });
+
+      if (cert) {
+        // Merge with existing tags so manual selections are never overwritten.
+        const merged = normalizeSdgList([...(cert.sdg_goals || []), ...labels]);
+        const { error: updateError } = await supabase
+          .from("certificates")
+          .update({ sdg_goals: merged })
+          .eq("id", cert.id);
+        if (updateError) throw updateError;
+        setCertificates((prev) => prev.map((c) => (c.id === cert.id ? { ...c, sdg_goals: merged } : c)));
+      } else {
+        setSdgTags((prev) => normalizeSdgList([...prev, ...labels]));
+        setSdgReasons((prev) => ({ ...prev, ...reasons }));
+      }
+
+      toast({ title: "SDGs detected", description: labels.join(", ") });
+    } catch (error: any) {
+      toast({
+        title: "Couldn't detect SDGs",
+        description: error?.message || "Please try again in a moment.",
+        variant: "destructive",
+      });
+    } finally {
+      cert ? setAutoDetectId(null) : setDetectingSdgs(false);
+    }
+  };
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -160,8 +222,10 @@ const Certificates = () => {
   const openAddDialog = () => {
     setEditingCert(null);
     setImagePreview(null);
-    setNewCert({ name: "", type: "certification", issuing_organization: "", issue_date: "", description: "", sdg_goals: "" });
+    setNewCert({ name: "", type: "certification", issuing_organization: "", issue_date: "", description: "" });
     setSelectedFile(null);
+    setSdgTags([]);
+    setSdgReasons({});
     setDialogOpen(true);
   };
 
@@ -173,9 +237,10 @@ const Certificates = () => {
       issuing_organization: cert.issuing_organization || "",
       issue_date: cert.issue_date || "",
       description: cert.description || "",
-      sdg_goals: cert.sdg_goals?.join(", ") || "",
     });
     setSelectedFile(null);
+    setSdgTags(normalizeSdgList(cert.sdg_goals || []));
+    setSdgReasons({});
     if (cert.file_path) {
       const { data } = supabase.storage.from("certificates").getPublicUrl(cert.file_path);
       const isImage = cert.file_name?.match(/\.(jpg|jpeg|png|gif|webp)$/i);
@@ -220,10 +285,7 @@ const Certificates = () => {
         mimeType = selectedFile.type;
       }
 
-      const sdgGoals = newCert.sdg_goals
-        .split(",")
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0);
+      const sdgGoals = normalizeSdgList(sdgTags);
 
       const certData = {
         name: capitalizeProper(newCert.name),
@@ -279,10 +341,12 @@ const Certificates = () => {
   };
 
   const resetForm = () => {
-    setNewCert({ name: "", type: "certification", issuing_organization: "", issue_date: "", description: "", sdg_goals: "" });
+    setNewCert({ name: "", type: "certification", issuing_organization: "", issue_date: "", description: "" });
     setSelectedFile(null);
     setImagePreview(null);
     setEditingCert(null);
+    setSdgTags([]);
+    setSdgReasons({});
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -518,36 +582,73 @@ const Certificates = () => {
               />
             </div>
 
-            {/* SDG Goals */}
+            {/* SDG Goals — auto-detected, user-editable */}
             <div className="space-y-2">
-              <Label>SDGs Covered</Label>
-              <Input
-                value={newCert.sdg_goals}
-                onChange={(e) => setNewCert({ ...newCert, sdg_goals: e.target.value })}
-                placeholder="SDG 4: Quality Education, SDG 9: Industry"
-                className="input-focus"
-              />
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {SDG_OPTIONS.slice(0, 6).map((sdg) => (
-                  <button
-                    key={sdg}
-                    type="button"
-                    onClick={() => {
-                      const current = newCert.sdg_goals;
-                      if (current.includes(sdg)) return;
-                      setNewCert({
-                        ...newCert,
-                        sdg_goals: current ? `${current}, ${sdg}` : sdg,
-                      });
-                    }}
-                    className="text-[10px] px-2 py-1 rounded-full bg-accent/10 text-accent border border-accent/20 hover:bg-accent/20 transition-colors"
-                  >
-                    {sdg.split(":")[0]}
-                  </button>
-                ))}
-                <span className="text-[10px] text-muted-foreground self-center">+{SDG_OPTIONS.length - 6} more</span>
+              <div className="flex items-center justify-between gap-2">
+                <Label>SDGs Covered</Label>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={detectingSdgs}
+                  onClick={() => detectSdgs()}
+                  className="h-8 text-xs"
+                >
+                  {detectingSdgs ? (
+                    <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                  ) : (
+                    <Wand2 className="w-3.5 h-3.5 mr-1.5" />
+                  )}
+                  Auto-detect SDGs
+                </Button>
               </div>
+              <p className="text-xs text-muted-foreground">
+                SDGs are detected automatically from your certificate — edit them here if needed.
+              </p>
+
+              {sdgTags.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {sdgTags.map((sdg) => (
+                    <span
+                      key={sdg}
+                      title={sdgReasons[sdg] || undefined}
+                      className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-accent/15 text-accent border border-accent/30"
+                    >
+                      {sdg}
+                      <button
+                        type="button"
+                        aria-label={`Remove ${sdg}`}
+                        onClick={() => setSdgTags(sdgTags.filter((t) => t !== sdg))}
+                        className="hover:text-foreground"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground italic">No SDGs yet.</p>
+              )}
+
+              <Select
+                value=""
+                onValueChange={(value) => {
+                  if (!sdgTags.includes(value)) setSdgTags([...sdgTags, value]);
+                }}
+              >
+                <SelectTrigger className="h-9 text-xs">
+                  <SelectValue placeholder="Add an SDG manually" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SDG_LABELS.filter((s) => !sdgTags.includes(s)).map((sdg) => (
+                    <SelectItem key={sdg} value={sdg} className="text-xs">
+                      {sdg}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+
 
             {/* File Upload */}
             <div className="space-y-2">
