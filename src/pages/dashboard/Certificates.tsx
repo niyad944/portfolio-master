@@ -507,36 +507,73 @@ const Certificates = () => {
               />
             </div>
 
-            {/* SDG Goals */}
+            {/* SDG Goals — auto-detected, user-editable */}
             <div className="space-y-2">
-              <Label>SDGs Covered</Label>
-              <Input
-                value={newCert.sdg_goals}
-                onChange={(e) => setNewCert({ ...newCert, sdg_goals: e.target.value })}
-                placeholder="SDG 4: Quality Education, SDG 9: Industry"
-                className="input-focus"
-              />
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {SDG_OPTIONS.slice(0, 6).map((sdg) => (
-                  <button
-                    key={sdg}
-                    type="button"
-                    onClick={() => {
-                      const current = newCert.sdg_goals;
-                      if (current.includes(sdg)) return;
-                      setNewCert({
-                        ...newCert,
-                        sdg_goals: current ? `${current}, ${sdg}` : sdg,
-                      });
-                    }}
-                    className="text-[10px] px-2 py-1 rounded-full bg-accent/10 text-accent border border-accent/20 hover:bg-accent/20 transition-colors"
-                  >
-                    {sdg.split(":")[0]}
-                  </button>
-                ))}
-                <span className="text-[10px] text-muted-foreground self-center">+{SDG_OPTIONS.length - 6} more</span>
+              <div className="flex items-center justify-between gap-2">
+                <Label>SDGs Covered</Label>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={detectingSdgs}
+                  onClick={() => detectSdgs()}
+                  className="h-8 text-xs"
+                >
+                  {detectingSdgs ? (
+                    <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                  ) : (
+                    <Wand2 className="w-3.5 h-3.5 mr-1.5" />
+                  )}
+                  Auto-detect SDGs
+                </Button>
               </div>
+              <p className="text-xs text-muted-foreground">
+                SDGs are detected automatically from your certificate — edit them here if needed.
+              </p>
+
+              {sdgTags.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {sdgTags.map((sdg) => (
+                    <span
+                      key={sdg}
+                      title={sdgReasons[sdg] || undefined}
+                      className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-accent/15 text-accent border border-accent/30"
+                    >
+                      {sdg}
+                      <button
+                        type="button"
+                        aria-label={`Remove ${sdg}`}
+                        onClick={() => setSdgTags(sdgTags.filter((t) => t !== sdg))}
+                        className="hover:text-foreground"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground italic">No SDGs yet.</p>
+              )}
+
+              <Select
+                value=""
+                onValueChange={(value) => {
+                  if (!sdgTags.includes(value)) setSdgTags([...sdgTags, value]);
+                }}
+              >
+                <SelectTrigger className="h-9 text-xs">
+                  <SelectValue placeholder="Add an SDG manually" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SDG_LABELS.filter((s) => !sdgTags.includes(s)).map((sdg) => (
+                    <SelectItem key={sdg} value={sdg} className="text-xs">
+                      {sdg}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+
 
             {/* File Upload */}
             <div className="space-y-2">
