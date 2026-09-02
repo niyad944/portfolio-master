@@ -21,6 +21,7 @@ import {
   BookOpen,
   Edit2,
   ImageIcon,
+  Wand2,
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -32,6 +33,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { capitalizeProper } from "@/lib/capitalizeProper";
+import { SDG_LABELS, normalizeSdgList } from "@/lib/sdgs";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface DashboardContext {
@@ -72,25 +74,6 @@ const certificateTypes = [
   { value: "other", label: "Other" },
 ];
 
-const SDG_OPTIONS = [
-  "SDG 1: No Poverty",
-  "SDG 2: Zero Hunger",
-  "SDG 3: Good Health & Well-Being",
-  "SDG 4: Quality Education",
-  "SDG 5: Gender Equality",
-  "SDG 6: Clean Water & Sanitation",
-  "SDG 7: Affordable & Clean Energy",
-  "SDG 8: Decent Work & Economic Growth",
-  "SDG 9: Industry, Innovation & Infrastructure",
-  "SDG 10: Reduced Inequalities",
-  "SDG 11: Sustainable Cities & Communities",
-  "SDG 12: Responsible Consumption & Production",
-  "SDG 13: Climate Action",
-  "SDG 14: Life Below Water",
-  "SDG 15: Life on Land",
-  "SDG 16: Peace, Justice & Strong Institutions",
-  "SDG 17: Partnerships for the Goals",
-];
 
 const Certificates = () => {
   const { user } = useOutletContext<DashboardContext>();
@@ -108,10 +91,14 @@ const Certificates = () => {
     issuing_organization: "",
     issue_date: "",
     description: "",
-    sdg_goals: "",
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  // SDG tags (AI-detected, user-editable)
+  const [sdgTags, setSdgTags] = useState<string[]>([]);
+  const [sdgReasons, setSdgReasons] = useState<Record<string, string>>({});
+  const [detectingSdgs, setDetectingSdgs] = useState(false);
 
   // AI analysis state
   const [analyzingId, setAnalyzingId] = useState<string | null>(null);
@@ -160,8 +147,10 @@ const Certificates = () => {
   const openAddDialog = () => {
     setEditingCert(null);
     setImagePreview(null);
-    setNewCert({ name: "", type: "certification", issuing_organization: "", issue_date: "", description: "", sdg_goals: "" });
+    setNewCert({ name: "", type: "certification", issuing_organization: "", issue_date: "", description: "" });
     setSelectedFile(null);
+    setSdgTags([]);
+    setSdgReasons({});
     setDialogOpen(true);
   };
 
@@ -173,9 +162,10 @@ const Certificates = () => {
       issuing_organization: cert.issuing_organization || "",
       issue_date: cert.issue_date || "",
       description: cert.description || "",
-      sdg_goals: cert.sdg_goals?.join(", ") || "",
     });
     setSelectedFile(null);
+    setSdgTags(normalizeSdgList(cert.sdg_goals || []));
+    setSdgReasons({});
     if (cert.file_path) {
       const { data } = supabase.storage.from("certificates").getPublicUrl(cert.file_path);
       const isImage = cert.file_name?.match(/\.(jpg|jpeg|png|gif|webp)$/i);
@@ -220,10 +210,7 @@ const Certificates = () => {
         mimeType = selectedFile.type;
       }
 
-      const sdgGoals = newCert.sdg_goals
-        .split(",")
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0);
+      const sdgGoals = normalizeSdgList(sdgTags);
 
       const certData = {
         name: capitalizeProper(newCert.name),
@@ -279,10 +266,12 @@ const Certificates = () => {
   };
 
   const resetForm = () => {
-    setNewCert({ name: "", type: "certification", issuing_organization: "", issue_date: "", description: "", sdg_goals: "" });
+    setNewCert({ name: "", type: "certification", issuing_organization: "", issue_date: "", description: "" });
     setSelectedFile(null);
     setImagePreview(null);
     setEditingCert(null);
+    setSdgTags([]);
+    setSdgReasons({});
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
