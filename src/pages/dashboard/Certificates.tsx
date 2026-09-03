@@ -939,6 +939,26 @@ const Certificates = () => {
                     )}
                   </Button>
                 )}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => detectSdgs(cert)}
+                  disabled={autoDetectId === cert.id}
+                  className="w-full mt-2 border-accent/30 text-accent hover:bg-accent/10"
+                >
+                  {autoDetectId === cert.id ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin mr-1.5" />
+                      Detecting SDGs...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 mr-1.5" />
+                      Auto-detect SDGs
+                    </>
+                  )}
+                </Button>
+
               </div>
             );
           })}
