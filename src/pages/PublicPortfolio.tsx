@@ -114,19 +114,19 @@ const PublicPortfolio = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-[hsl(224_47%_4%)] grid place-items-center">
-        <Loader2 className="h-6 w-6 animate-spin text-white/60" />
+        <Loader2 className="h-6 w-6 animate-spin text-slate-500" />
       </div>
     );
   }
   if (notFound) {
     return (
-      <div className="min-h-screen relative text-white grid place-items-center overflow-hidden">
+      <div className="min-h-screen relative text-slate-900 grid place-items-center overflow-hidden">
         <AuroraBackground />
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center relative z-10 px-6">
           <h1 className="font-pf-display text-4xl sm:text-5xl font-semibold tracking-tight">Portfolio not found</h1>
-          <p className="mt-3 text-white/60">This portfolio doesn't exist or is set to private.</p>
+          <p className="mt-3 text-slate-500">This portfolio doesn't exist or is set to private.</p>
           <Link to="/" className="inline-block mt-8">
-            <Button className="rounded-full bg-white text-black hover:bg-white/90 px-6"><ArrowLeft className="h-4 w-4 mr-2" />Go home</Button>
+            <Button className="rounded-full bg-slate-900 text-white hover:bg-slate-800 px-6"><ArrowLeft className="h-4 w-4 mr-2" />Go home</Button>
           </Link>
         </motion.div>
       </div>
@@ -147,13 +147,13 @@ const PublicPortfolio = () => {
   const brand = profile?.full_name?.split(" ")[0] || "Portfolio";
 
   return (
-    <div className="relative min-h-screen text-white antialiased [font-family:'Inter',system-ui,sans-serif] [&_.font-pf-display]:font-pf-display [&_h1]:font-pf-display [&_h2]:font-pf-display [&_h3]:font-pf-display">
+    <div className="relative min-h-screen text-slate-900 antialiased [font-family:'Inter',system-ui,sans-serif] [&_.font-pf-display]:font-pf-display [&_h1]:font-pf-display [&_h2]:font-pf-display [&_h3]:font-pf-display">
       <AuroraBackground />
       <ScrollProgress />
       <FloatingNav items={items} onDownload={handleDownload} brand={brand} />
       {exporting && (
         <div className="fixed inset-x-0 top-20 z-50 flex justify-center">
-          <div className="rounded-full bg-black/70 backdrop-blur px-4 py-2 text-xs text-white/80 border border-white/10 inline-flex items-center gap-2">
+          <div className="rounded-full bg-white/85 backdrop-blur px-4 py-2 text-xs text-slate-700 border border-slate-200 inline-flex items-center gap-2">
             <Loader2 className="h-3 w-3 animate-spin" /> Generating PDF…
           </div>
         </div>

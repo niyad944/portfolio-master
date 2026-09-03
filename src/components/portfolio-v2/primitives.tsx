@@ -31,9 +31,9 @@ export const GlassCard = ({
 }) => (
   <Tag
     className={cn(
-      "relative rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl",
+      "relative rounded-2xl border border-slate-200 bg-white backdrop-blur-xl",
       "shadow-[0_8px_32px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.06)]",
-      hover && "transition-all duration-500 hover:border-white/20 hover:bg-white/[0.05] hover:shadow-[0_20px_60px_rgba(59,130,246,0.15),inset_0_1px_0_rgba(255,255,255,0.08)]",
+      hover && "transition-all duration-500 hover:border-slate-300 hover:bg-white hover:shadow-[0_20px_60px_rgba(59,130,246,0.15),inset_0_1px_0_rgba(255,255,255,0.08)]",
       className,
     )}
   >
@@ -192,7 +192,7 @@ export const SectionHeading = ({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-      className="font-display text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-white"
+      className="font-display text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-slate-900"
     >
       {title}
     </motion.h2>
@@ -202,7 +202,7 @@ export const SectionHeading = ({
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ delay: 0.1 }}
-        className={cn("mt-4 text-base text-white/60 max-w-2xl", align === "center" && "mx-auto")}
+        className={cn("mt-4 text-base text-slate-500 max-w-2xl", align === "center" && "mx-auto")}
       >
         {description}
       </motion.p>
@@ -372,13 +372,13 @@ export const CircularProgress = ({ value, label, sub }: { value: number; label: 
             transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
           />
         </svg>
-        <div className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-white">
+        <div className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-slate-900">
           {pct}%
         </div>
       </div>
       <div className="text-center">
-        <div className="text-sm font-medium text-white">{label}</div>
-        {sub && <div className="text-[10px] font-mono uppercase tracking-widest text-white/40">{sub}</div>}
+        <div className="text-sm font-medium text-slate-900">{label}</div>
+        {sub && <div className="text-[10px] font-mono uppercase tracking-widest text-slate-400">{sub}</div>}
       </div>
     </div>
   );

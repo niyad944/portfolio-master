@@ -29,7 +29,7 @@ export const CertificatesSection = ({ certificates, slug }: { certificates: Cert
     <Section id="certificates">
       <SectionHeading
         eyebrow="Credentials"
-        title={<>Certificates <span className="text-white/50">& impact.</span></>}
+        title={<>Certificates <span className="text-slate-500">& impact.</span></>}
         description="Recognized learning tied to real-world Sustainable Development Goals."
       />
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -44,17 +44,17 @@ export const CertificatesSection = ({ certificates, slug }: { certificates: Cert
                     {image ? (
                       <img src={url!} alt={c.name} loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
                     ) : (
-                      <div className="absolute inset-0 grid place-items-center font-display text-4xl text-white/40">
+                      <div className="absolute inset-0 grid place-items-center font-display text-4xl text-slate-400">
                         {c.name.slice(0, 1)}
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent" />
                     {c.sdg_goals && c.sdg_goals.length > 0 && (
                       <div className="absolute bottom-3 left-3 right-3 flex flex-wrap gap-1.5">
                         {c.sdg_goals.slice(0, 3).map((s, j) => (
                           <span
                             key={j}
-                            className="rounded-lg bg-black/70 backdrop-blur px-2.5 py-1 text-xs font-extrabold tracking-wide text-white border border-white/15 shadow-[0_0_16px_hsl(var(--pf-cyan)/0.35)]"
+                            className="rounded-lg bg-white/85 backdrop-blur px-2.5 py-1 text-xs font-extrabold tracking-wide text-slate-900 border border-slate-200 shadow-[0_0_16px_hsl(var(--pf-cyan)/0.35)]"
                           >
                             {s.split(":")[0]}
                           </span>
@@ -63,12 +63,12 @@ export const CertificatesSection = ({ certificates, slug }: { certificates: Cert
                     )}
                   </div>
                   <div className="p-5 flex-1 flex flex-col">
-                    <h3 className="font-display text-lg font-semibold text-white line-clamp-2">{c.name}</h3>
+                    <h3 className="font-display text-lg font-semibold text-slate-900 line-clamp-2">{c.name}</h3>
                     {c.issuing_organization && (
-                      <p className="mt-1 text-sm text-white/60">{c.issuing_organization}</p>
+                      <p className="mt-1 text-sm text-slate-500">{c.issuing_organization}</p>
                     )}
                     {c.issue_date && (
-                      <p className="mt-1 text-xs font-mono text-white/40">
+                      <p className="mt-1 text-xs font-mono text-slate-400">
                         {new Date(c.issue_date).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
                       </p>
                     )}

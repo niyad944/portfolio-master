@@ -59,8 +59,8 @@ export const FloatingNav = ({
       >
         <nav
           className={cn(
-            "flex items-center justify-between gap-4 rounded-full border border-white/10 px-4 py-2.5 sm:px-6 backdrop-blur-2xl transition-all duration-500",
-            scrolled ? "bg-black/50 shadow-[0_10px_40px_rgba(0,0,0,0.4)]" : "bg-white/[0.03]",
+            "flex items-center justify-between gap-4 rounded-full border border-slate-200 px-4 py-2.5 sm:px-6 backdrop-blur-2xl transition-all duration-500",
+            scrolled ? "bg-white/85 shadow-[0_10px_40px_rgba(0,0,0,0.4)]" : "bg-white",
           )}
         >
           <button
@@ -69,7 +69,7 @@ export const FloatingNav = ({
             aria-label="Scroll to top"
           >
             <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[hsl(var(--pf-cyan))] to-[hsl(var(--pf-violet))] shadow-[0_0_20px_hsl(var(--pf-blue)/0.5)]" />
-            <span className="hidden sm:block font-display font-semibold tracking-tight text-white">
+            <span className="hidden sm:block font-display font-semibold tracking-tight text-slate-900">
               {brand}
             </span>
           </button>
@@ -81,14 +81,14 @@ export const FloatingNav = ({
                   onClick={() => scrollTo(item.id)}
                   className={cn(
                     "relative px-3.5 py-2 text-sm rounded-full transition-colors",
-                    active === item.id ? "text-white" : "text-white/60 hover:text-white",
+                    active === item.id ? "text-slate-900" : "text-slate-500 hover:text-slate-900",
                   )}
                 >
                   {active === item.id && (
                     <motion.span
                       layoutId="pf-nav-pill"
                       transition={{ type: "spring", stiffness: 280, damping: 25 }}
-                      className="absolute inset-0 rounded-full bg-white/10"
+                      className="absolute inset-0 rounded-full bg-slate-100"
                     />
                   )}
                   <span className="relative">{item.label}</span>
@@ -100,7 +100,7 @@ export const FloatingNav = ({
           <div className="flex items-center gap-2">
             <MagneticButton
               onClick={() => scrollTo("contact")}
-              className="hidden sm:inline-flex text-white/80 hover:text-white border border-white/15 hover:border-white/30 px-4 py-2 text-sm"
+              className="hidden sm:inline-flex text-slate-700 hover:text-slate-900 border border-slate-200 hover:border-slate-300 px-4 py-2 text-sm"
               ariaLabel="Jump to contact"
             >
               <Mail className="h-3.5 w-3.5" />
@@ -108,7 +108,7 @@ export const FloatingNav = ({
             </MagneticButton>
             <MagneticButton
               onClick={onDownload}
-              className="text-black bg-white hover:bg-white/90 px-4 py-2 text-sm font-medium shadow-[0_0_30px_hsl(var(--pf-cyan)/0.35)]"
+              className="text-white bg-slate-900 hover:bg-slate-800 px-4 py-2 text-sm font-medium shadow-[0_0_30px_hsl(var(--pf-cyan)/0.35)]"
               ariaLabel="Download portfolio as PDF"
             >
               <Download className="h-3.5 w-3.5" />
@@ -116,7 +116,7 @@ export const FloatingNav = ({
             </MagneticButton>
             <button
               onClick={() => setOpen((o) => !o)}
-              className="md:hidden h-9 w-9 grid place-items-center rounded-full border border-white/15 text-white"
+              className="md:hidden h-9 w-9 grid place-items-center rounded-full border border-slate-200 text-slate-900"
               aria-label="Toggle navigation"
             >
               {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
@@ -130,7 +130,7 @@ export const FloatingNav = ({
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="md:hidden mt-2 rounded-3xl border border-white/10 bg-black/70 backdrop-blur-2xl p-2"
+              className="md:hidden mt-2 rounded-3xl border border-slate-200 bg-white/85 backdrop-blur-2xl p-2"
             >
               {items.map((item) => (
                 <button
@@ -138,11 +138,11 @@ export const FloatingNav = ({
                   onClick={() => scrollTo(item.id)}
                   className={cn(
                     "flex w-full items-center justify-between rounded-2xl px-4 py-3 text-sm text-left transition-colors",
-                    active === item.id ? "bg-white/10 text-white" : "text-white/70 hover:bg-white/5",
+                    active === item.id ? "bg-slate-100 text-slate-900" : "text-slate-600 hover:bg-slate-50",
                   )}
                 >
                   {item.label}
-                  <span className="text-xs font-mono text-white/40">↗</span>
+                  <span className="text-xs font-mono text-slate-400">↗</span>
                 </button>
               ))}
             </motion.div>

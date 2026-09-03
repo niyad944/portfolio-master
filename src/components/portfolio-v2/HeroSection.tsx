@@ -39,7 +39,7 @@ export const HeroSection = ({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7 }}
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-white/70 mb-6"
+            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-600 mb-6"
           >
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
@@ -53,18 +53,18 @@ export const HeroSection = ({
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-            className="font-display text-5xl sm:text-6xl md:text-7xl font-semibold leading-[1.02] tracking-tight text-white"
+            className="font-display text-5xl sm:text-6xl md:text-7xl font-semibold leading-[1.02] tracking-tight text-slate-900"
           >
             Hey, I'm <GradientText>{fullName.split(" ")[0]}</GradientText>.
             <br />
-            <span className="text-white/70">I craft digital things that matter.</span>
+            <span className="text-slate-600">I craft digital things that matter.</span>
           </motion.h1>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.7 }}
-            className="mt-6 text-lg sm:text-xl text-white/80 font-medium"
+            className="mt-6 text-lg sm:text-xl text-slate-700 font-medium"
           >
             <TypingText words={roles} />
           </motion.div>
@@ -74,7 +74,7 @@ export const HeroSection = ({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.35, duration: 0.7 }}
-              className="mt-6 max-w-xl text-base text-white/60 leading-relaxed"
+              className="mt-6 max-w-xl text-base text-slate-500 leading-relaxed"
             >
               {bio}
             </motion.p>
@@ -85,7 +85,7 @@ export const HeroSection = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.45 }}
-              className="mt-4 inline-flex items-center gap-2 text-sm text-white/50"
+              className="mt-4 inline-flex items-center gap-2 text-sm text-slate-500"
             >
               <MapPin className="h-4 w-4" /> {location}
             </motion.p>
@@ -99,21 +99,21 @@ export const HeroSection = ({
           >
             <MagneticButton
               onClick={() => document.getElementById("projects")?.scrollIntoView({ behavior: "smooth" })}
-              className="bg-white text-black hover:bg-white/90 shadow-[0_10px_40px_hsl(var(--pf-cyan)/0.35)] px-6 py-3.5"
+              className="bg-slate-900 text-white hover:bg-slate-800 shadow-[0_10px_40px_hsl(var(--pf-cyan)/0.35)] px-6 py-3.5"
             >
               <Sparkles className="h-4 w-4" />
               View Work
             </MagneticButton>
             <MagneticButton
               onClick={onDownload}
-              className="border border-white/15 text-white hover:border-white/30 hover:bg-white/5 px-6 py-3.5"
+              className="border border-slate-200 text-slate-900 hover:border-slate-300 hover:bg-slate-50 px-6 py-3.5"
             >
               <Download className="h-4 w-4" />
               Download CV
             </MagneticButton>
             <MagneticButton
               onClick={() => document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" })}
-              className="text-white/70 hover:text-white px-4 py-3.5"
+              className="text-slate-600 hover:text-slate-900 px-4 py-3.5"
             >
               <Mail className="h-4 w-4" />
               Get in touch
@@ -128,19 +128,19 @@ export const HeroSection = ({
           >
             {linkedin && (
               <a href={linkedin} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"
-                className="h-10 w-10 grid place-items-center rounded-full border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition">
+                className="h-10 w-10 grid place-items-center rounded-full border border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 transition">
                 <Linkedin className="h-4 w-4" />
               </a>
             )}
             {github && (
               <a href={github} target="_blank" rel="noopener noreferrer" aria-label="GitHub"
-                className="h-10 w-10 grid place-items-center rounded-full border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition">
+                className="h-10 w-10 grid place-items-center rounded-full border border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 transition">
                 <Github className="h-4 w-4" />
               </a>
             )}
             {portfolio && (
               <a href={portfolio} target="_blank" rel="noopener noreferrer" aria-label="Personal site"
-                className="h-10 w-10 grid place-items-center rounded-full border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition">
+                className="h-10 w-10 grid place-items-center rounded-full border border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 transition">
                 <Globe className="h-4 w-4" />
               </a>
             )}
@@ -161,12 +161,12 @@ export const HeroSection = ({
                 <motion.div
                   animate={{ rotate: 360 }}
                   transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-                  className="absolute -inset-6 rounded-full border border-white/10 [mask-image:linear-gradient(to_bottom,white,transparent)]"
+                  className="absolute -inset-6 rounded-full border border-slate-200 [mask-image:linear-gradient(to_bottom,white,transparent)]"
                 />
                 <motion.div
                   animate={{ rotate: -360 }}
                   transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
-                  className="absolute -inset-12 rounded-full border border-dashed border-white/10 [mask-image:linear-gradient(to_top,white,transparent)]"
+                  className="absolute -inset-12 rounded-full border border-dashed border-slate-200 [mask-image:linear-gradient(to_top,white,transparent)]"
                 />
               </>
             )}
@@ -175,7 +175,7 @@ export const HeroSection = ({
                 {photoUrl ? (
                   <img src={photoUrl} alt={fullName} className="h-full w-full object-cover" />
                 ) : (
-                  <div className="h-full w-full grid place-items-center text-6xl font-display text-white/60">
+                  <div className="h-full w-full grid place-items-center text-6xl font-display text-slate-500">
                     {fullName.slice(0, 1).toUpperCase()}
                   </div>
                 )}
@@ -187,14 +187,14 @@ export const HeroSection = ({
                 <motion.div
                   animate={{ y: [0, -12, 0] }}
                   transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                  className="absolute -left-6 top-8 rounded-2xl border border-white/10 bg-black/60 backdrop-blur-xl px-3 py-2 text-xs text-white/80"
+                  className="absolute -left-6 top-8 rounded-2xl border border-slate-200 bg-white/85 backdrop-blur-xl px-3 py-2 text-xs text-slate-700"
                 >
                   <span className="text-[hsl(var(--pf-cyan))]">✦</span> Building
                 </motion.div>
                 <motion.div
                   animate={{ y: [0, 12, 0] }}
                   transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                  className="absolute -right-4 bottom-10 rounded-2xl border border-white/10 bg-black/60 backdrop-blur-xl px-3 py-2 text-xs text-white/80"
+                  className="absolute -right-4 bottom-10 rounded-2xl border border-slate-200 bg-white/85 backdrop-blur-xl px-3 py-2 text-xs text-slate-700"
                 >
                   <span className="text-[hsl(var(--pf-violet))]">◆</span> Shipping
                 </motion.div>
@@ -209,7 +209,7 @@ export const HeroSection = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1, y: [0, 8, 0] }}
         transition={{ opacity: { delay: 1 }, y: { duration: 2, repeat: Infinity, ease: "easeInOut" } }}
-        className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/40 hover:text-white transition-colors"
+        className="absolute bottom-6 left-1/2 -translate-x-1/2 text-slate-400 hover:text-slate-900 transition-colors"
         aria-label="Scroll down"
       >
         <ArrowDown className="h-5 w-5" />
