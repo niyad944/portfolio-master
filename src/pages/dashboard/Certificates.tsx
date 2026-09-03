@@ -300,6 +300,8 @@ const Certificates = () => {
         ...(mimeType ? { mime_type: mimeType } : {}),
       };
 
+      let savedCert: Certificate | null = null;
+
       if (editingCert) {
         const { data, error } = await supabase
           .from("certificates")
@@ -310,6 +312,7 @@ const Certificates = () => {
 
         if (error) throw error;
         if (data) {
+          savedCert = data as unknown as Certificate;
           setCertificates(certificates.map((c) => (c.id === data.id ? (data as unknown as Certificate) : c)));
           toast({ title: "Certificate Updated" });
         }
@@ -322,13 +325,19 @@ const Certificates = () => {
 
         if (error) throw error;
         if (data) {
+          savedCert = data as unknown as Certificate;
           setCertificates([data as unknown as Certificate, ...certificates]);
           toast({ title: "Certificate Added", description: "Your certificate has been securely stored." });
         }
       }
 
+      const shouldAutoDetect = !!selectedFile && sdgGoals.length === 0 && !!savedCert;
+
       setDialogOpen(false);
       resetForm();
+
+      // Freshly uploaded file with no manual SDGs → classify it automatically.
+      if (shouldAutoDetect && savedCert) void detectSdgs(savedCert);
     } catch (error: any) {
       toast({
         title: "Upload Failed",
@@ -339,6 +348,7 @@ const Certificates = () => {
       setUploading(false);
     }
   };
+
 
   const resetForm = () => {
     setNewCert({ name: "", type: "certification", issuing_organization: "", issue_date: "", description: "" });
