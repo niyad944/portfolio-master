@@ -171,11 +171,11 @@ export const HeroSection = ({
               </>
             )}
             <div className="relative h-64 w-64 sm:h-80 sm:w-80 rounded-full p-[2px] bg-gradient-to-br from-[hsl(var(--pf-cyan))] via-[hsl(var(--pf-blue))] to-[hsl(var(--pf-violet))] shadow-[0_20px_80px_hsl(var(--pf-violet)/0.35)]">
-              <div className="h-full w-full rounded-full overflow-hidden bg-[hsl(var(--pf-bg))]">
+              <div className="h-full w-full rounded-full overflow-hidden bg-white">
                 {photoUrl ? (
                   <img src={photoUrl} alt={fullName} className="h-full w-full object-cover" />
                 ) : (
-                  <div className="h-full w-full grid place-items-center text-6xl font-display text-slate-500">
+                  <div className="h-full w-full grid place-items-center text-6xl font-display text-slate-400">
                     {fullName.slice(0, 1).toUpperCase()}
                   </div>
                 )}

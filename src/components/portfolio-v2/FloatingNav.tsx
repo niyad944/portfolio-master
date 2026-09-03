@@ -54,13 +54,13 @@ export const FloatingNav = ({
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
         className={cn(
-          "fixed top-4 left-1/2 -translate-x-1/2 z-40 w-[min(1100px,calc(100vw-2rem))]",
+          "pf-nav pf-no-print fixed top-4 left-1/2 -translate-x-1/2 z-40 w-[min(1100px,calc(100vw-2rem))]",
         )}
       >
         <nav
           className={cn(
             "flex items-center justify-between gap-4 rounded-full border border-slate-200 px-4 py-2.5 sm:px-6 backdrop-blur-2xl transition-all duration-500",
-            scrolled ? "bg-white/85 shadow-[0_10px_40px_rgba(0,0,0,0.4)]" : "bg-white",
+            scrolled ? "bg-white/90 shadow-[0_10px_40px_rgba(15,23,42,0.08)]" : "bg-white/60",
           )}
         >
           <button

@@ -17,7 +17,7 @@ export const EducationSection = ({ education }: { education: Edu[] }) => {
     <Section id="education">
       <SectionHeading eyebrow="Journey" title={<>Education <span className="text-slate-500">timeline.</span></>} />
       <div className="relative">
-        <div className="absolute left-4 md:left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-white/15 to-transparent" />
+        <div className="absolute left-4 md:left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-slate-300 to-transparent" />
         <div className="space-y-8">
           {education.map((e, i) => {
             const right = i % 2 === 0;

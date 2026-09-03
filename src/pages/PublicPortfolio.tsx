@@ -113,8 +113,8 @@ const PublicPortfolio = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[hsl(224_47%_4%)] grid place-items-center">
-        <Loader2 className="h-6 w-6 animate-spin text-slate-500" />
+      <div className="min-h-screen bg-[hsl(var(--pf-bg))] grid place-items-center">
+        <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
       </div>
     );
   }
@@ -147,7 +147,7 @@ const PublicPortfolio = () => {
   const brand = profile?.full_name?.split(" ")[0] || "Portfolio";
 
   return (
-    <div className="relative min-h-screen text-slate-900 antialiased [font-family:'Inter',system-ui,sans-serif] [&_.font-pf-display]:font-pf-display [&_h1]:font-pf-display [&_h2]:font-pf-display [&_h3]:font-pf-display">
+    <div className="pf-portfolio relative min-h-screen text-slate-900 antialiased [font-family:'Inter',system-ui,sans-serif] [&_.font-pf-display]:font-pf-display [&_h1]:font-pf-display [&_h2]:font-pf-display [&_h3]:font-pf-display">
       <AuroraBackground />
       <ScrollProgress />
       <FloatingNav items={items} onDownload={handleDownload} brand={brand} />

@@ -31,9 +31,9 @@ export const GlassCard = ({
 }) => (
   <Tag
     className={cn(
-      "relative rounded-2xl border border-slate-200 bg-white backdrop-blur-xl",
-      "shadow-[0_8px_32px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.06)]",
-      hover && "transition-all duration-500 hover:border-slate-300 hover:bg-white hover:shadow-[0_20px_60px_rgba(59,130,246,0.15),inset_0_1px_0_rgba(255,255,255,0.08)]",
+      "relative rounded-2xl border border-slate-200/80 bg-white/85 backdrop-blur-xl",
+      "shadow-[0_8px_30px_rgba(15,23,42,0.06)]",
+      hover && "transition-all duration-500 hover:border-[hsl(var(--pf-blue))]/40 hover:bg-white hover:shadow-[0_20px_50px_rgba(37,99,235,0.12)]",
       className,
     )}
   >
@@ -250,30 +250,30 @@ export const AnimatedCounter = ({ value, duration = 1600, suffix = "" }: { value
 export const AuroraBackground = () => {
   const reduce = useReducedMotionSafe();
   return (
-    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-[hsl(var(--pf-bg))]">
+    <div aria-hidden className="pf-aurora pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-[hsl(var(--pf-bg))]">
       {/* Base radial gradient */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(var(--pf-surface))_0%,hsl(var(--pf-bg))_60%)]" />
       {/* Grid */}
-      <div className="absolute inset-0 opacity-[0.04] [background-image:linear-gradient(to_right,white_1px,transparent_1px),linear-gradient(to_bottom,white_1px,transparent_1px)] [background-size:64px_64px] [mask-image:radial-gradient(ellipse_at_center,black_20%,transparent_75%)]" />
+      <div className="absolute inset-0 opacity-[0.18] [background-image:linear-gradient(to_right,rgb(148,163,184)_1px,transparent_1px),linear-gradient(to_bottom,rgb(148,163,184)_1px,transparent_1px)] [background-size:64px_64px] [mask-image:radial-gradient(ellipse_at_center,black_20%,transparent_75%)]" />
       {/* Blobs */}
       <motion.div
         animate={reduce ? undefined : { x: [0, 60, -40, 0], y: [0, -30, 40, 0] }}
         transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute -top-32 -left-32 h-[520px] w-[520px] rounded-full bg-[hsl(var(--pf-blue))]/25 blur-[140px]"
+        className="absolute -top-32 -left-32 h-[520px] w-[520px] rounded-full bg-[hsl(var(--pf-blue))]/20 blur-[140px]"
       />
       <motion.div
         animate={reduce ? undefined : { x: [0, -60, 30, 0], y: [0, 40, -20, 0] }}
         transition={{ duration: 26, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-1/3 -right-40 h-[600px] w-[600px] rounded-full bg-[hsl(var(--pf-violet))]/25 blur-[160px]"
+        className="absolute top-1/3 -right-40 h-[600px] w-[600px] rounded-full bg-[hsl(var(--pf-violet))]/15 blur-[160px]"
       />
       <motion.div
         animate={reduce ? undefined : { x: [0, 40, -50, 0], y: [0, -50, 30, 0] }}
         transition={{ duration: 30, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute bottom-0 left-1/4 h-[500px] w-[500px] rounded-full bg-[hsl(var(--pf-cyan))]/20 blur-[150px]"
+        className="absolute bottom-0 left-1/4 h-[500px] w-[500px] rounded-full bg-[hsl(var(--pf-cyan))]/15 blur-[150px]"
       />
       {/* Noise */}
       <div
-        className="absolute inset-0 opacity-[0.035] mix-blend-overlay"
+        className="absolute inset-0 opacity-[0.02] mix-blend-multiply"
         style={{
           backgroundImage:
             "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>\")",
@@ -357,7 +357,7 @@ export const CircularProgress = ({ value, label, sub }: { value: number; label: 
               <stop offset="100%" stopColor="hsl(var(--pf-violet))" />
             </linearGradient>
           </defs>
-          <circle cx={size / 2} cy={size / 2} r={radius} stroke="rgba(255,255,255,0.08)" strokeWidth={stroke} fill="none" />
+          <circle cx={size / 2} cy={size / 2} r={radius} stroke="rgb(226,232,240)" strokeWidth={stroke} fill="none" />
           <motion.circle
             cx={size / 2}
             cy={size / 2}
