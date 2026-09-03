@@ -24,7 +24,7 @@ export const ProjectsSection = ({ projects }: { projects: Project[] }) => {
     <Section id="projects">
       <SectionHeading
         eyebrow="Selected work"
-        title={<>Projects <span className="text-white/50">I've shipped.</span></>}
+        title={<>Projects <span className="text-slate-500">I've shipped.</span></>}
         description="A curated selection of things I've built — click any card to see the details."
       />
 
@@ -49,28 +49,28 @@ export const ProjectsSection = ({ projects }: { projects: Project[] }) => {
                             className="absolute inset-0 h-full w-full object-cover transition-transform duration-[900ms] ease-out group-hover:scale-105"
                           />
                         ) : (
-                          <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--pf-blue))]/20 via-[hsl(var(--pf-violet))]/20 to-black grid place-items-center">
-                            <span className="font-display text-6xl text-white/40">{p.title.slice(0, 1)}</span>
+                          <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--pf-blue))]/20 via-[hsl(var(--pf-violet))]/20 to-slate-300 grid place-items-center">
+                            <span className="font-display text-6xl text-slate-400">{p.title.slice(0, 1)}</span>
                           </div>
                         )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/45 via-slate-900/5 to-transparent" />
                         {p.is_featured && (
-                          <span className="absolute top-4 left-4 inline-flex items-center gap-1 rounded-full bg-black/60 backdrop-blur px-3 py-1 text-xs text-white border border-white/15">
+                          <span className="absolute top-4 left-4 inline-flex items-center gap-1 rounded-full bg-white/85 backdrop-blur px-3 py-1 text-xs text-slate-900 border border-slate-200">
                             <Star className="h-3 w-3 fill-[hsl(var(--pf-cyan))] text-[hsl(var(--pf-cyan))]" /> Featured
                           </span>
                         )}
                       </div>
                       <div className="p-6 sm:p-8 md:[direction:ltr] flex flex-col justify-center">
-                        <h3 className="font-display text-2xl sm:text-3xl font-semibold text-white tracking-tight">
+                        <h3 className="font-display text-2xl sm:text-3xl font-semibold text-slate-900 tracking-tight">
                           {p.title}
                         </h3>
                         {p.description && (
-                          <p className="mt-3 text-sm sm:text-base text-white/60 leading-relaxed line-clamp-4">{p.description}</p>
+                          <p className="mt-3 text-sm sm:text-base text-slate-500 leading-relaxed line-clamp-4">{p.description}</p>
                         )}
                         {p.technologies && p.technologies.length > 0 && (
                           <div className="mt-4 flex flex-wrap gap-1.5">
                             {p.technologies.slice(0, 6).map((t) => (
-                              <span key={t} className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[11px] font-mono text-white/70">
+                              <span key={t} className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-mono text-slate-600">
                                 {t}
                               </span>
                             ))}
@@ -90,7 +90,7 @@ export const ProjectsSection = ({ projects }: { projects: Project[] }) => {
       </div>
 
       <Dialog open={!!active} onOpenChange={(o) => !o && setActive(null)}>
-        <DialogContent className="max-w-3xl bg-[hsl(var(--pf-surface))]/95 backdrop-blur-2xl border-white/10 text-white p-0 overflow-hidden">
+        <DialogContent className="max-w-3xl bg-[hsl(var(--pf-surface))]/95 backdrop-blur-2xl border-slate-200 text-slate-900 p-0 overflow-hidden">
           <AnimatePresence>
             {active && (
               <motion.div
@@ -104,15 +104,15 @@ export const ProjectsSection = ({ projects }: { projects: Project[] }) => {
                 )}
                 <div className="p-6 sm:p-8">
                   <DialogHeader>
-                    <DialogTitle className="font-display text-2xl sm:text-3xl text-white">{active.title}</DialogTitle>
+                    <DialogTitle className="font-display text-2xl sm:text-3xl text-slate-900">{active.title}</DialogTitle>
                   </DialogHeader>
                   {active.description && (
-                    <p className="mt-4 text-white/70 leading-relaxed">{active.description}</p>
+                    <p className="mt-4 text-slate-600 leading-relaxed">{active.description}</p>
                   )}
                   {active.technologies && active.technologies.length > 0 && (
                     <div className="mt-6 flex flex-wrap gap-2">
                       {active.technologies.map((t) => (
-                        <span key={t} className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-xs text-white/80">
+                        <span key={t} className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700">
                           {t}
                         </span>
                       ))}
@@ -121,13 +121,13 @@ export const ProjectsSection = ({ projects }: { projects: Project[] }) => {
                   <div className="mt-6 flex gap-3">
                     {active.project_url && (
                       <a href={active.project_url} target="_blank" rel="noopener noreferrer"
-                         className="inline-flex items-center gap-2 rounded-full bg-white text-black px-4 py-2 text-sm">
+                         className="inline-flex items-center gap-2 rounded-full bg-slate-900 text-white px-4 py-2 text-sm">
                         <ExternalLink className="h-4 w-4" /> Live Demo
                       </a>
                     )}
                     {active.github_url && (
                       <a href={active.github_url} target="_blank" rel="noopener noreferrer"
-                         className="inline-flex items-center gap-2 rounded-full border border-white/15 text-white px-4 py-2 text-sm hover:bg-white/5">
+                         className="inline-flex items-center gap-2 rounded-full border border-slate-200 text-slate-900 px-4 py-2 text-sm hover:bg-slate-50">
                         <Github className="h-4 w-4" /> Source
                       </a>
                     )}

@@ -152,7 +152,7 @@ const PublicDocumentView = () => {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
-        className="border-b border-white/[0.06] glass-strong sticky top-0 z-20"
+        className="border-b border-slate-300/[0.06] glass-strong sticky top-0 z-20"
       >
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link
@@ -216,7 +216,7 @@ const PublicDocumentView = () => {
                 />
               )}
               {fileUrl && isImage && (
-                <div className="flex items-center justify-center p-6 sm:p-10 bg-black/20 h-full">
+                <div className="flex items-center justify-center p-6 sm:p-10 bg-slate-100 h-full">
                   <img
                     src={fileUrl}
                     alt={certificate.name}
@@ -287,7 +287,7 @@ const PublicDocumentView = () => {
 
               {/* SDG highlight on details side */}
               {sdgGoals.length > 0 && (
-                <div className="mt-4 pt-4 border-t border-white/[0.06]">
+                <div className="mt-4 pt-4 border-t border-slate-300/[0.06]">
                   <p className="text-xs uppercase tracking-widest text-muted-foreground mb-3 font-mono">SDG Impact</p>
                   <div className="flex flex-wrap gap-2">
                     {sdgGoals.map((sdg: string, i: number) => (
@@ -306,7 +306,7 @@ const PublicDocumentView = () => {
         </motion.div>
       </main>
 
-      <footer className="border-t border-white/[0.06] py-8 text-center relative z-10">
+      <footer className="border-t border-slate-300/[0.06] py-8 text-center relative z-10">
         <p className="text-xs text-muted-foreground font-mono">
           Powered by{" "}
           <Link to="/" className="text-accent hover:underline">

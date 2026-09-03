@@ -46,28 +46,28 @@ export const SkillsSection = ({ skills }: { skills: Skill[] }) => {
 
   return (
     <Section id="skills">
-      <SectionHeading eyebrow="Toolbox" title={<>Skills & <span className="text-white/50">strengths.</span></>} description="A snapshot of tools I reach for and where my depth sits today." />
+      <SectionHeading eyebrow="Toolbox" title={<>Skills & <span className="text-slate-500">strengths.</span></>} description="A snapshot of tools I reach for and where my depth sits today." />
 
       <div className="grid lg:grid-cols-[1.1fr_.9fr] gap-6">
         <Reveal>
           <GlassCard className="p-6 sm:p-8">
-            <h3 className="text-sm font-mono uppercase tracking-widest text-white/50 mb-6">Top proficiencies</h3>
+            <h3 className="text-sm font-mono uppercase tracking-widest text-slate-500 mb-6">Top proficiencies</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
               {topSkills.map((s) => (
                 <CircularProgress key={s.id} label={s.name} sub={s.proficiency_level || undefined} value={levelToPct(s.proficiency_level)} />
               ))}
             </div>
             <div className="mt-8">
-              <h3 className="text-sm font-mono uppercase tracking-widest text-white/50 mb-3">Full stack</h3>
+              <h3 className="text-sm font-mono uppercase tracking-widest text-slate-500 mb-3">Full stack</h3>
               <div className="flex flex-wrap gap-2">
                 {skills.map((s) => (
                   <span
                     key={s.id}
-                    className="group relative rounded-full border border-white/10 bg-white/[0.03] px-3.5 py-1.5 text-xs text-white/75 hover:text-white hover:border-white/25 transition-all"
+                    className="group relative rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs text-slate-900/75 hover:text-slate-900 hover:border-slate-300 transition-all"
                   >
                     {s.name}
                     {s.proficiency_level && (
-                      <span className="ml-1.5 text-[10px] font-mono text-white/40">{s.proficiency_level}</span>
+                      <span className="ml-1.5 text-[10px] font-mono text-slate-400">{s.proficiency_level}</span>
                     )}
                   </span>
                 ))}
@@ -78,7 +78,7 @@ export const SkillsSection = ({ skills }: { skills: Skill[] }) => {
 
         <Reveal delay={0.1}>
           <GlassCard className="p-6 sm:p-8 h-full flex flex-col">
-            <h3 className="text-sm font-mono uppercase tracking-widest text-white/50 mb-3">Category radar</h3>
+            <h3 className="text-sm font-mono uppercase tracking-widest text-slate-500 mb-3">Category radar</h3>
             <div className="flex-1 min-h-[280px]">
               {radarData.length >= 3 ? (
                 <ResponsiveContainer width="100%" height="100%">
@@ -90,7 +90,7 @@ export const SkillsSection = ({ skills }: { skills: Skill[] }) => {
                   </RadarChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-full grid place-items-center text-sm text-white/50 text-center p-8">
+                <div className="h-full grid place-items-center text-sm text-slate-500 text-center p-8">
                   Add categorized skills to see a radar visualization here.
                 </div>
               )}

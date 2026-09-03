@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { GlassCard, Reveal, Section, SectionHeading, TiltCard } from "./primitives";
 
@@ -29,57 +29,75 @@ export const CertificatesSection = ({ certificates, slug }: { certificates: Cert
     <Section id="certificates">
       <SectionHeading
         eyebrow="Credentials"
-        title={<>Certificates <span className="text-white/50">& impact.</span></>}
+        title={<>Certificates <span className="text-slate-400">& impact.</span></>}
         description="Recognized learning tied to real-world Sustainable Development Goals."
       />
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+
+      <div className="space-y-6 md:space-y-8">
         {certificates.map((c, i) => {
+          const even = i % 2 === 0;
           const url = previewUrl(c);
           const image = url && isImg(c);
           return (
-            <Reveal key={c.id} delay={i * 0.06}>
-              <TiltCard max={5}>
-                <GlassCard className="overflow-hidden h-full flex flex-col">
-                  <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-[hsl(var(--pf-blue))]/20 to-[hsl(var(--pf-violet))]/20">
-                    {image ? (
-                      <img src={url!} alt={c.name} loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
-                    ) : (
-                      <div className="absolute inset-0 grid place-items-center font-display text-4xl text-white/40">
-                        {c.name.slice(0, 1)}
+            <Reveal key={c.id} delay={i * 0.05}>
+              <TiltCard max={4}>
+                <Link to={`/p/${slug}/document/${c.id}`} className="block w-full text-left group">
+                  <GlassCard className="overflow-hidden">
+                    <div className={`grid md:grid-cols-2 ${even ? "" : "md:[direction:rtl]"}`}>
+                      <div className="relative aspect-[16/10] md:aspect-auto min-h-[240px] overflow-hidden md:[direction:ltr] bg-slate-50">
+                        {image ? (
+                          <img
+                            src={url!}
+                            alt={c.name}
+                            loading="lazy"
+                            className="absolute inset-0 h-full w-full object-cover transition-transform duration-[900ms] ease-out group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--pf-blue))]/10 via-[hsl(var(--pf-violet))]/10 to-slate-100 grid place-items-center">
+                            {url ? (
+                              <FileText className="h-14 w-14 text-slate-400" />
+                            ) : (
+                              <span className="font-display text-6xl text-slate-300">{c.name.slice(0, 1)}</span>
+                            )}
+                          </div>
+                        )}
                       </div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                    {c.sdg_goals && c.sdg_goals.length > 0 && (
-                      <div className="absolute bottom-3 left-3 right-3 flex flex-wrap gap-1.5">
-                        {c.sdg_goals.slice(0, 3).map((s, j) => (
-                          <span
-                            key={j}
-                            className="rounded-lg bg-black/70 backdrop-blur px-2.5 py-1 text-xs font-extrabold tracking-wide text-white border border-white/15 shadow-[0_0_16px_hsl(var(--pf-cyan)/0.35)]"
-                          >
-                            {s.split(":")[0]}
-                          </span>
-                        ))}
+
+                      <div className="p-6 sm:p-8 md:[direction:ltr] flex flex-col justify-center">
+                        {c.sdg_goals && c.sdg_goals.length > 0 && (
+                          <div className="mb-4 flex flex-wrap gap-2">
+                            {c.sdg_goals.map((s, j) => (
+                              <span
+                                key={j}
+                                className="rounded-full border border-[hsl(var(--pf-blue))]/25 bg-gradient-to-r from-[hsl(var(--pf-cyan))]/12 to-[hsl(var(--pf-violet))]/12 px-4 py-1.5 text-sm sm:text-base font-extrabold tracking-tight bg-clip-text text-transparent [background-image:linear-gradient(90deg,hsl(var(--pf-blue)),hsl(var(--pf-violet)))] transition-transform duration-300 group-hover:scale-[1.03]"
+                              >
+                                {s.split(":")[0].trim()}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        <h3 className="font-display text-2xl sm:text-3xl font-semibold text-slate-900 tracking-tight">
+                          {c.name}
+                        </h3>
+                        {c.issuing_organization && (
+                          <p className="mt-2 text-sm sm:text-base font-medium text-slate-600">{c.issuing_organization}</p>
+                        )}
+                        {c.issue_date && (
+                          <p className="mt-1 text-xs font-mono uppercase tracking-widest text-slate-400">
+                            {new Date(c.issue_date).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+                          </p>
+                        )}
+                        {c.description && (
+                          <p className="mt-3 text-sm sm:text-base text-slate-500 leading-relaxed line-clamp-4">{c.description}</p>
+                        )}
+                        <div className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-[hsl(var(--pf-blue))]">
+                          View certificate <ExternalLink className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+                        </div>
                       </div>
-                    )}
-                  </div>
-                  <div className="p-5 flex-1 flex flex-col">
-                    <h3 className="font-display text-lg font-semibold text-white line-clamp-2">{c.name}</h3>
-                    {c.issuing_organization && (
-                      <p className="mt-1 text-sm text-white/60">{c.issuing_organization}</p>
-                    )}
-                    {c.issue_date && (
-                      <p className="mt-1 text-xs font-mono text-white/40">
-                        {new Date(c.issue_date).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
-                      </p>
-                    )}
-                    <Link
-                      to={`/p/${slug}/document/${c.id}`}
-                      className="mt-auto pt-4 inline-flex items-center gap-1.5 text-sm text-[hsl(var(--pf-cyan))] hover:gap-2 transition-all"
-                    >
-                      View certificate <ExternalLink className="h-3.5 w-3.5" />
-                    </Link>
-                  </div>
-                </GlassCard>
+                    </div>
+                  </GlassCard>
+                </Link>
               </TiltCard>
             </Reveal>
           );

@@ -6,19 +6,38 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
-/* Portfolio v2 tokens */
+/* Portfolio v2 tokens - light professional theme */
 :root {
-  --pf-bg: 224 47% 4%;
-  --pf-surface: 224 40% 8%;
-  --pf-cyan: 190 95% 60%;
-  --pf-blue: 217 91% 60%;
-  --pf-violet: 265 85% 68%;
+  --pf-bg: 210 40% 99%;
+  --pf-surface: 210 40% 96%;
+  --pf-cyan: 190 90% 38%;
+  --pf-blue: 217 85% 50%;
+  --pf-violet: 265 70% 55%;
 }
 .font-pf-display { font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif; }
 @keyframes pf-gradient-shift {
   0%,100% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
 }
+
+/* Print: keep the portfolio design, drop the interactive chrome */
+@media print {
+  .pf-no-print,
+  header.pf-nav,
+  .pf-portfolio button:not(.pf-print-keep) {
+    display: none !important;
+  }
+  .pf-portfolio {
+    background: #fff !important;
+    color: #0f172a !important;
+  }
+  .pf-portfolio [aria-hidden="true"].pf-aurora { display: none !important; }
+  .pf-portfolio section { page-break-inside: avoid; break-inside: avoid; padding-top: 18px !important; padding-bottom: 18px !important; }
+  .pf-portfolio img { max-width: 100% !important; }
+  .pf-portfolio * { animation: none !important; transition: none !important; box-shadow: none !important; backdrop-filter: none !important; }
+  @page { size: A4; margin: 12mm; }
+}
+
 
 @layer base {
   :root {
