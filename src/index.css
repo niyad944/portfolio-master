@@ -783,3 +783,65 @@
     display: none !important;
   }
 }
+
+/* Original public portfolio structure, scoped to a printer-friendly light palette. */
+.portfolio-original-light {
+  --background: 0 0% 100%;
+  --foreground: 222 47% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 40%;
+  --accent: 191 91% 36%;
+  --accent-foreground: 0 0% 100%;
+  --border: 214 32% 88%;
+  --plasma: 217 91% 60%;
+  color: hsl(var(--foreground));
+  background: hsl(var(--background));
+}
+
+.portfolio-original-light .glass,
+.portfolio-original-light .glass-strong,
+.portfolio-original-light .glass-card,
+.portfolio-original-light .glass-card-hover {
+  background: hsl(var(--card) / 0.96);
+  border-color: hsl(var(--border));
+  box-shadow: 0 10px 30px -18px hsl(222 47% 11% / 0.2);
+}
+
+.portfolio-original-light .glass-card-hover:hover {
+  border-color: hsl(var(--accent) / 0.42);
+  box-shadow: 0 18px 40px -20px hsl(var(--accent) / 0.3);
+}
+
+.portfolio-original-light .bg-white\\/\\[0\\.05\\],
+.portfolio-original-light .hover\\:bg-white\\/\\[0\\.06\\]:hover {
+  background-color: hsl(var(--muted));
+}
+
+.portfolio-original-light .border-white\\/10,
+.portfolio-original-light .border-white\\/\\[0\\.06\\] {
+  border-color: hsl(var(--border));
+}
+
+@media print {
+  .portfolio-original-light {
+    background: white !important;
+  }
+  .portfolio-original-light > .fixed,
+  .portfolio-original-light .float-3d {
+    animation: none !important;
+  }
+  .portfolio-original-light main {
+    padding-top: 12mm !important;
+    padding-bottom: 12mm !important;
+  }
+  .portfolio-original-light .glass-card,
+  .portfolio-original-light .glass-card-hover {
+    background: white !important;
+    border: 1px solid #dbe3ec !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
