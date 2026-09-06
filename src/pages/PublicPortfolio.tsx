@@ -682,13 +682,15 @@ const PublicPortfolio = () => {
                             {cert.sdg_goals?.length > 0 && (
                               <div className="flex flex-wrap gap-2 mb-4">
                                 {cert.sdg_goals.map((sdg: string, i: number) => (
-                                  <Badge
-                                    key={i}
-                                    className="text-base sm:text-lg font-extrabold bg-gradient-to-r from-accent/30 to-accent/10 text-accent border-accent/40 px-4 py-2 tracking-wide shadow-[0_0_16px_hsl(var(--accent)/0.15)]"
-                                    style={{ textShadow: '0 0 20px hsl(var(--accent) / 0.25)' }}
-                                  >
-                                    {sdg}
-                                  </Badge>
+                                  <span key={i} className="inline-flex items-center gap-2">
+                                    <SDGLogo sdg={sdg} size={30} />
+                                    <Badge
+                                      className="text-base sm:text-lg font-extrabold bg-gradient-to-r from-accent/30 to-accent/10 text-accent border-accent/40 px-4 py-2 tracking-wide shadow-[0_0_16px_hsl(var(--accent)/0.15)]"
+                                      style={{ textShadow: '0 0 20px hsl(var(--accent) / 0.25)' }}
+                                    >
+                                      {sdg}
+                                    </Badge>
+                                  </span>
                                 ))}
                               </div>
                             )}
