@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { SDGLogo } from "@/components/SDGLogo";
 import { useOutletContext } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -622,8 +623,9 @@ const Certificates = () => {
                     <span
                       key={sdg}
                       title={sdgReasons[sdg] || undefined}
-                      className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-accent/15 text-accent border border-accent/30"
+                      className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-accent/15 text-accent border border-accent/30"
                     >
+                      <SDGLogo sdg={sdg} size={16} />
                       {sdg}
                       <button
                         type="button"
@@ -858,13 +860,15 @@ const Certificates = () => {
                 {cert.sdg_goals && cert.sdg_goals.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mb-3">
                     {cert.sdg_goals.map((sdg, i) => (
-                      <Badge
-                        key={i}
-                        className="text-xs sm:text-sm font-extrabold bg-gradient-to-r from-accent/25 to-accent/10 text-accent border-accent/30 px-3 py-1.5 shadow-[0_0_10px_hsl(var(--accent)/0.1)]"
-                        style={{ textShadow: '0 0 12px hsl(var(--accent) / 0.2)' }}
-                      >
-                        {sdg}
-                      </Badge>
+                      <span key={i} className="inline-flex items-center gap-1.5">
+                        <SDGLogo sdg={sdg} size={22} />
+                        <Badge
+                          className="text-xs sm:text-sm font-extrabold bg-gradient-to-r from-accent/25 to-accent/10 text-accent border-accent/30 px-3 py-1.5 shadow-[0_0_10px_hsl(var(--accent)/0.1)]"
+                          style={{ textShadow: '0 0 12px hsl(var(--accent) / 0.2)' }}
+                        >
+                          {sdg}
+                        </Badge>
+                      </span>
                     ))}
                   </div>
                 )}

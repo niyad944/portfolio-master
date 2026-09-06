@@ -16,6 +16,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import FloatingOrbs from "@/components/effects/FloatingOrbs";
+import { SDGLogo } from "@/components/SDGLogo";
 
 const PublicDocumentView = () => {
   const { slug, docId } = useParams();
@@ -194,9 +195,10 @@ const PublicDocumentView = () => {
                 {sdgGoals.map((sdg: string, i: number) => (
                   <span
                     key={i}
-                    className="inline-block text-lg sm:text-xl md:text-2xl font-extrabold tracking-wide text-accent bg-accent/10 border border-accent/25 backdrop-blur-sm px-5 py-2.5 rounded-xl shadow-[0_0_20px_hsl(var(--accent)/0.15)]"
+                    className="inline-flex items-center gap-2.5 text-lg sm:text-xl md:text-2xl font-extrabold tracking-wide text-accent bg-accent/10 border border-accent/25 backdrop-blur-sm px-5 py-2.5 rounded-xl shadow-[0_0_20px_hsl(var(--accent)/0.15)]"
                     style={{ textShadow: '0 0 24px hsl(var(--accent) / 0.3)' }}
                   >
+                    <SDGLogo sdg={sdg} size={34} />
                     {sdg}
                   </span>
                 ))}
@@ -291,12 +293,14 @@ const PublicDocumentView = () => {
                   <p className="text-xs uppercase tracking-widest text-muted-foreground mb-3 font-mono">SDG Impact</p>
                   <div className="flex flex-wrap gap-2">
                     {sdgGoals.map((sdg: string, i: number) => (
-                      <Badge
-                        key={i}
-                        className="text-sm font-extrabold bg-gradient-to-r from-accent/30 to-accent/10 text-accent border-accent/40 px-3 py-1.5 tracking-wide shadow-[0_0_12px_hsl(var(--accent)/0.12)]"
-                      >
-                        {sdg}
-                      </Badge>
+                      <span key={i} className="inline-flex items-center gap-2">
+                        <SDGLogo sdg={sdg} size={24} />
+                        <Badge
+                          className="text-sm font-extrabold bg-gradient-to-r from-accent/30 to-accent/10 text-accent border-accent/40 px-3 py-1.5 tracking-wide shadow-[0_0_12px_hsl(var(--accent)/0.12)]"
+                        >
+                          {sdg}
+                        </Badge>
+                      </span>
                     ))}
                   </div>
                 </div>

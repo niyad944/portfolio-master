@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { SDGLogo } from "@/components/SDGLogo";
 import { useOutletContext } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -492,12 +493,14 @@ const Projects = () => {
               {project.sdg_goals && project.sdg_goals.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mb-3">
                   {project.sdg_goals.map((sdg, i) => (
-                    <Badge
-                      key={i}
-                      className="text-[10px] sm:text-xs font-bold bg-gradient-to-r from-accent/20 to-accent/10 text-accent border-accent/30 px-2.5 py-1"
-                    >
-                      {sdg}
-                    </Badge>
+                    <span key={i} className="inline-flex items-center gap-1.5">
+                      <SDGLogo sdg={sdg} size={18} />
+                      <Badge
+                        className="text-[10px] sm:text-xs font-bold bg-gradient-to-r from-accent/20 to-accent/10 text-accent border-accent/30 px-2.5 py-1"
+                      >
+                        {sdg}
+                      </Badge>
+                    </span>
                   ))}
                 </div>
               )}
