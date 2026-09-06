@@ -814,13 +814,13 @@
   box-shadow: 0 18px 40px -20px hsl(var(--accent) / 0.3);
 }
 
-.portfolio-original-light .bg-white\\/\\[0\\.05\\],
-.portfolio-original-light .hover\\:bg-white\\/\\[0\\.06\\]:hover {
+.portfolio-original-light .bg-white\/\[0\.05\],
+.portfolio-original-light .hover\:bg-white\/\[0\.06\]:hover {
   background-color: hsl(var(--muted));
 }
 
-.portfolio-original-light .border-white\\/10,
-.portfolio-original-light .border-white\\/\\[0\\.06\\] {
+.portfolio-original-light .border-white\/10,
+.portfolio-original-light .border-white\/\[0\.06\] {
   border-color: hsl(var(--border));
 }
 
