@@ -195,9 +195,10 @@ const PublicDocumentView = () => {
                 {sdgGoals.map((sdg: string, i: number) => (
                   <span
                     key={i}
-                    className="inline-block text-lg sm:text-xl md:text-2xl font-extrabold tracking-wide text-accent bg-accent/10 border border-accent/25 backdrop-blur-sm px-5 py-2.5 rounded-xl shadow-[0_0_20px_hsl(var(--accent)/0.15)]"
+                    className="inline-flex items-center gap-2.5 text-lg sm:text-xl md:text-2xl font-extrabold tracking-wide text-accent bg-accent/10 border border-accent/25 backdrop-blur-sm px-5 py-2.5 rounded-xl shadow-[0_0_20px_hsl(var(--accent)/0.15)]"
                     style={{ textShadow: '0 0 24px hsl(var(--accent) / 0.3)' }}
                   >
+                    <SDGLogo sdg={sdg} size={34} />
                     {sdg}
                   </span>
                 ))}
