@@ -499,6 +499,7 @@ const Projects = () => {
                       >
                         {sdg}
                       </Badge>
+                    </span>
                   ))}
                 </div>
               )}
