@@ -16,6 +16,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import FloatingOrbs from "@/components/effects/FloatingOrbs";
+import { SDGLogo } from "@/components/SDGLogo";
 
 const PublicDocumentView = () => {
   const { slug, docId } = useParams();
