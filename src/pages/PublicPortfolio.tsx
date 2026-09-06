@@ -472,12 +472,14 @@ const PublicPortfolio = () => {
                               {project.sdg_goals?.length > 0 && (
                                 <div className="flex flex-wrap gap-1.5 mb-3">
                                   {project.sdg_goals.map((sdg: string, i: number) => (
-                                    <Badge
-                                      key={i}
-                                      className="text-[10px] sm:text-xs font-bold bg-gradient-to-r from-accent/25 to-accent/10 text-accent border-accent/30 px-2.5 py-1"
-                                    >
-                                      {sdg}
-                                    </Badge>
+                                    <span key={i} className="inline-flex items-center gap-1.5">
+                                      <SDGLogo sdg={sdg} size={18} />
+                                      <Badge
+                                        className="text-[10px] sm:text-xs font-bold bg-gradient-to-r from-accent/25 to-accent/10 text-accent border-accent/30 px-2.5 py-1"
+                                      >
+                                        {sdg}
+                                      </Badge>
+                                    </span>
                                   ))}
                                 </div>
                               )}
