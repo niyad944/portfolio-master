@@ -622,8 +622,9 @@ const Certificates = () => {
                     <span
                       key={sdg}
                       title={sdgReasons[sdg] || undefined}
-                      className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-accent/15 text-accent border border-accent/30"
+                      className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-accent/15 text-accent border border-accent/30"
                     >
+                      <SDGLogo sdg={sdg} size={16} />
                       {sdg}
                       <button
                         type="button"
