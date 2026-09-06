@@ -293,12 +293,14 @@ const PublicDocumentView = () => {
                   <p className="text-xs uppercase tracking-widest text-muted-foreground mb-3 font-mono">SDG Impact</p>
                   <div className="flex flex-wrap gap-2">
                     {sdgGoals.map((sdg: string, i: number) => (
-                      <Badge
-                        key={i}
-                        className="text-sm font-extrabold bg-gradient-to-r from-accent/30 to-accent/10 text-accent border-accent/40 px-3 py-1.5 tracking-wide shadow-[0_0_12px_hsl(var(--accent)/0.12)]"
-                      >
-                        {sdg}
-                      </Badge>
+                      <span key={i} className="inline-flex items-center gap-2">
+                        <SDGLogo sdg={sdg} size={24} />
+                        <Badge
+                          className="text-sm font-extrabold bg-gradient-to-r from-accent/30 to-accent/10 text-accent border-accent/40 px-3 py-1.5 tracking-wide shadow-[0_0_12px_hsl(var(--accent)/0.12)]"
+                        >
+                          {sdg}
+                        </Badge>
+                      </span>
                     ))}
                   </div>
                 </div>
