@@ -136,8 +136,35 @@ const PublicPortfolio = () => {
     try {
       // Print the portfolio page exactly as displayed (print CSS hides site chrome).
       document.body.classList.add("pf-printing");
-      // Give images/layout a tick to settle before opening the print dialog.
-      await new Promise((r) => setTimeout(r, 300));
+
+      // Force every portfolio image (including lazy/off-screen ones) to load first.
+      const root = portfolioRef.current ?? document.body;
+      const images = Array.from(root.querySelectorAll("img"));
+      images.forEach((img) => {
+        img.loading = "eager";
+        (img as any).decoding = "sync";
+        // Nudge the browser to (re)start the fetch for lazily deferred images.
+        if (!img.complete && img.src) img.src = img.src;
+      });
+
+      await Promise.all(
+        images.map(
+          (img) =>
+            new Promise<void>((resolve) => {
+              if (img.complete && img.naturalWidth > 0) return resolve();
+              const done = () => resolve();
+              img.addEventListener("load", done, { once: true });
+              img.addEventListener("error", done, { once: true });
+              setTimeout(done, 8000);
+            })
+        )
+      );
+
+      // Let decoded images paint before the print snapshot.
+      await Promise.all(images.map((img) => img.decode?.().catch(() => {}) ?? Promise.resolve()));
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(null))));
+      await new Promise((r) => setTimeout(r, 350));
+
       window.print();
     } catch (error) {
       console.error("Portfolio export failed", error);
@@ -146,6 +173,7 @@ const PublicPortfolio = () => {
       setExporting(false);
     }
   };
+
 
 
   const containerVariants = {
