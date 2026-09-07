@@ -628,21 +628,6 @@ const PublicPortfolio = () => {
                                 loading="lazy"
                               />
                               <div className="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent md:hidden" />
-                              {/* SDG overlay on image */}
-                              {cert.sdg_goals?.length > 0 && (
-                                <div className="absolute bottom-3 left-3 right-3 flex flex-wrap gap-1.5">
-                                  {cert.sdg_goals.map((sdg: string, i: number) => (
-                                    <span
-                                      key={i}
-                                      className="inline-flex items-center gap-2 text-base sm:text-lg font-extrabold tracking-wide text-accent drop-shadow-lg bg-background/80 backdrop-blur-md px-4 py-1.5 rounded-xl shadow-[0_0_16px_hsl(var(--accent)/0.2)]"
-                                      style={{ textShadow: '0 0 20px hsl(var(--accent) / 0.3)' }}
-                                    >
-                                      <SDGLogo sdg={sdg} size={24} />
-                                      {sdg.split(":")[0]}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
                             </div>
                             {/* Details side */}
                             <div className="w-full md:w-1/2 p-5 sm:p-7 flex flex-col justify-center">
