@@ -134,44 +134,19 @@ const PublicPortfolio = () => {
   const handleDownloadPDF = async () => {
     setExporting(true);
     try {
-      const { printResume } = await import("@/components/resume/ResumePrint");
-      await printResume("professional", {
-        profile: {
-          full_name: profile?.full_name || "",
-          bio: profile?.bio || "",
-          email: profile?.email || profile?.contact_email || "",
-          phone: profile?.phone || "",
-          location: profile?.location || "",
-          linkedin_url: profile?.linkedin_url || "",
-          github_url: profile?.github_url || "",
-          portfolio_url: profile?.portfolio_url || "",
-          profile_photo_url: profile?.profile_photo_url || "",
-        },
-        skills: skills.map((skill: any) => ({ name: skill.name, proficiency_level: skill.proficiency_level, category: skill.category })),
-        education: education.map((entry: any) => ({
-          degree: entry.degree,
-          institution: entry.institution,
-          field_of_study: entry.field_of_study,
-          start_date: entry.start_date,
-          end_date: entry.end_date,
-          grade: entry.grade,
-        })),
-        projects: projects.map((project: any) => ({
-          title: project.title,
-          description: project.description,
-          technologies: project.technologies || [],
-        })),
-        achievements: [
-          ...achievements.map((achievement: any) => ({ title: achievement.title, description: achievement.description, issuer: achievement.issuer })),
-          ...certificates.map((certificate: any) => ({ title: certificate.name, description: certificate.description, issuer: certificate.issuing_organization })),
-        ],
-      });
+      // Print the portfolio page exactly as displayed (print CSS hides site chrome).
+      document.body.classList.add("pf-printing");
+      // Give images/layout a tick to settle before opening the print dialog.
+      await new Promise((r) => setTimeout(r, 300));
+      window.print();
     } catch (error) {
-      console.error("PDF export failed", error);
+      console.error("Portfolio export failed", error);
     } finally {
+      document.body.classList.remove("pf-printing");
       setExporting(false);
     }
   };
+
 
   const containerVariants = {
     hidden: { opacity: 0 },

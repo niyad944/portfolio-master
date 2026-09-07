@@ -844,4 +844,41 @@
     break-inside: avoid;
     page-break-inside: avoid;
   }
+
+  /* Print the portfolio only: drop app chrome and ambient effects. */
+  @page { size: A4; margin: 10mm; }
+  html, body {
+    background: #fff !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .portfolio-original-light .pf-no-print,
+  .portfolio-original-light header,
+  .portfolio-original-light footer,
+  .portfolio-original-light > .fixed {
+    display: none !important;
+  }
+  .portfolio-original-light,
+  .portfolio-original-light * {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    filter: none !important;
+    backdrop-filter: none !important;
+    opacity: 1 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .portfolio-original-light main {
+    max-width: none !important;
+  }
+  .portfolio-original-light img {
+    max-width: 100% !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .portfolio-original-light section {
+    break-inside: auto;
+  }
 }
+
